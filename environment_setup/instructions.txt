@@ -1,0 +1,15 @@
+# how to create the requirements file:
+    # activate the conda enviroment you want to use.
+    # cd to the directory you want to put the requirements file.
+    # run this command: conda list -e > requirements.txt
+    # comment out # gym requirement
+
+# how to run the requirements file:
+    # go to conda (base) by running: conda deactivate
+    # run this command: conda config --append channels conda-forge
+    # cd to directory with requirements file
+    # create your new environment: conda create --name <env> --file requirements.txt
+        # example: conda create --name CryptoBot --file requirements.txt
+        # Note, this may take a while because we have so many requirements
+    # Activate enviroment, install pip to conda if necessary
+    # Finally, pip install gym==0.26.1
