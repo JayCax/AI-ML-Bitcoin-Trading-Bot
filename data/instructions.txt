@@ -1,2 +1,0 @@
-# add your Wiki_Prices.csv file in data location replacing the placeholder file, and run get_data.py
-# if you get an error, make sure the path to Wiki_Prices is correct.
