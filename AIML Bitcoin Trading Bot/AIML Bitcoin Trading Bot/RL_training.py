@@ -8,6 +8,7 @@
 #### IMPORTS  ####
 
 import warnings
+
 warnings.filterwarnings('ignore')
 import matplotlib
 
@@ -32,6 +33,7 @@ from keras.regularizers import l2
 
 import gym
 from gym.envs.registration import register
+
 
 #### CLASSES ####
 
@@ -152,32 +154,33 @@ class DDQNAgent:
         if self.total_steps % self.tau == 0:
             self.update_target()
 
+
 #### FUNCTIONS ####
 def format_time(t):
     m_, s = divmod(t, 60)
     h, m = divmod(m_, 60)
     return '{:02.0f}:{:02.0f}:{:02.0f}'.format(h, m, s)
 
+
 def set_up_gym(trading_days):
     ## SET UP GYM ENVIRONMENT
 
     register(
         id='trading-v0',
-        entry_point='trading_env:TradingEnvironment',
+        entry_point='trading_env:TradingEnvironment',       # this is where we call the trading_env.py
         max_episode_steps=trading_days
     )
 
+
 def init_agent(trading_days):
-
-
     ## INITIALIZING TRADING ENVIRONMENT
-    trading_cost_bps = 1e-3
-    time_cost_bps = 1e-4
+    trading_cost_bps = .0001
+    time_cost_bps = .00001
 
     f'Trading costs: {trading_cost_bps:.2%} | Time costs: {time_cost_bps:.2%}'
 
     trading_environment = gym.make('trading-v0',
-                                   ticker='AAPL',
+                                   ticker='BTC',
                                    trading_days=trading_days,
                                    trading_cost_bps=trading_cost_bps,
                                    time_cost_bps=time_cost_bps)
@@ -187,8 +190,6 @@ def init_agent(trading_days):
     state_dim = trading_environment.observation_space.shape[0]
     num_actions = trading_environment.action_space.n
     max_episode_steps = trading_environment.spec.max_episode_steps
-
-
 
     ## DEFINE HYPERPARAMETERS
 
@@ -233,8 +234,8 @@ def init_agent(trading_days):
     ddqn.online_network.summary()
     return (trading_environment, ddqn, state_dim)
 
-def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
 
+def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
     ## RUN EXPERIMENT ##########################
 
     ## SET PARAMETERS
@@ -320,6 +321,7 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
 
     return (episode, navs, market_navs, diffs)
 
+
 def store_analyze_results(episode, navs, market_navs, diffs, results_path):
     ## STORE RESULTS
 
@@ -367,7 +369,6 @@ def store_analyze_results(episode, navs, market_navs, diffs, results_path):
     fig.savefig(results_path / 'performance', dpi=300)
 
 
-
 def main():
     ## SETTINGS
     np.random.seed(42)
@@ -393,7 +394,7 @@ def main():
     trading_environment, ddqn, state_dim = init_agent(trading_days)
 
     episode, navs, market_navs, diffs = run_tests(trading_environment, ddqn, state_dim, max_episode_steps)
-    #could have run_tests return direct to store_analyze_results but keeping it seperate for now
+    # could have run_tests return direct to store_analyze_results but keeping it seperate for now
     store_analyze_results(episode, navs, market_navs, diffs, results_path)
 
 
