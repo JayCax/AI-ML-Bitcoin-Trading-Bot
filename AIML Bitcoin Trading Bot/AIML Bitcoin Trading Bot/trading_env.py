@@ -48,8 +48,7 @@ class DataSource:
     Provides data for each new episode.
 
     """
-
-    def __init__(self, trading_days=252, ticker='AAPL', normalize=True):
+    def __init__(self, trading_days=252, ticker='BTC', normalize=True):
         self.ticker = ticker
         self.trading_days = trading_days
         self.normalize = normalize
@@ -61,21 +60,24 @@ class DataSource:
         self.offset = None
 
     def load_data(self):
-        log.info('loading data for {}...'.format(self.ticker))
+        # I edited this function quite a bit
+        log.info(f'loading data for ...{self.ticker}')
         idx = pd.IndexSlice
-        with pd.HDFStore('../data/assets.h5') as store:
+        with pd.HDFStore("../data/1_min_btc.h5") as store:
             df = (store['quandl/wiki/prices']
                   .loc[idx[:, self.ticker],
-                       ['adj_close', 'adj_volume', 'adj_low', 'adj_high']]
+                       ['open', 'high', 'low', 'close', 'volume_btc', 'volume_currency', 'weighted_price']]
                   .dropna()
                   .sort_index())
-        df.columns = ['close', 'volume', 'low', 'high']
-        log.info('got data for {}...'.format(self.ticker))
+        df.columns = ['open', 'high', 'low', 'close', 'volume_btc', 'volume_currency', 'weighted_price']
+        log.info(f'got data for ...{self.ticker}')
         return df
 
     def preprocess_data(self):
         """calculate returns and percentiles, then removes missing values"""
 
+        # this is a good place to add other things that we can change
+        # Note: .close is accessible because of how load data works with pd.HDFStore
         self.data['returns'] = self.data.close.pct_change()
         self.data['ret_2'] = self.data.close.pct_change(2)
         self.data['ret_5'] = self.data.close.pct_change(5)
@@ -89,8 +91,10 @@ class DataSource:
         self.data['stoch'] = slowd - slowk
         self.data['atr'] = talib.ATR(self.data.high, self.data.low, self.data.close)
         self.data['ultosc'] = talib.ULTOSC(self.data.high, self.data.low, self.data.close)
+
+        # edited this line?
         self.data = (self.data.replace((np.inf, -np.inf), np.nan)
-                     .drop(['high', 'low', 'close', 'volume'], axis=1)
+                     .drop(['open', 'high', 'low', 'close', 'volume_btc', 'volume_currency', 'weighted_price'], axis=1)
                      .dropna())
 
         r = self.data.returns.copy()
@@ -176,22 +180,22 @@ class TradingSimulator:
             self.market_navs[self.step] = start_market_nav * (1 + self.market_returns[self.step])
 
         info = {'reward': reward,
-                'nav'   : self.navs[self.step],
-                'costs' : self.costs[self.step]}
+                'nav': self.navs[self.step],
+                'costs': self.costs[self.step]}
 
         self.step += 1
         return reward, info
 
     def result(self):
         """returns current state as pd.DataFrame """
-        return pd.DataFrame({'action'         : self.actions,  # current action
-                             'nav'            : self.navs,  # starting Net Asset Value (NAV)
-                             'market_nav'     : self.market_navs,
-                             'market_return'  : self.market_returns,
+        return pd.DataFrame({'action': self.actions,  # current action
+                             'nav': self.navs,  # starting Net Asset Value (NAV)
+                             'market_nav': self.market_navs,
+                             'market_return': self.market_returns,
                              'strategy_return': self.strategy_returns,
-                             'position'       : self.positions,  # eod position
-                             'cost'           : self.costs,  # eod costs
-                             'trade'          : self.trades})  # eod trade)
+                             'position': self.positions,  # eod position
+                             'cost': self.costs,  # eod costs
+                             'trade': self.trades})  # eod trade)
 
 
 class TradingEnvironment(gym.Env):
@@ -220,13 +224,13 @@ class TradingEnvironment(gym.Env):
                  trading_days=252,
                  trading_cost_bps=1e-3,
                  time_cost_bps=1e-4,
-                 ticker='AAPL'):
+                 ticker='BTC'):
         self.trading_days = trading_days
         self.trading_cost_bps = trading_cost_bps
         self.ticker = ticker
         self.time_cost_bps = time_cost_bps
-        self.data_source = DataSource(trading_days=self.trading_days,
-                                      ticker=ticker)
+        # calls DataSource and Trading simulator to set them up
+        self.data_source = DataSource(trading_days=self.trading_days)
         self.simulator = TradingSimulator(steps=self.trading_days,
                                           trading_cost_bps=self.trading_cost_bps,
                                           time_cost_bps=self.time_cost_bps)
