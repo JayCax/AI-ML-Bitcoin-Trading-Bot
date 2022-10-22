@@ -31,6 +31,9 @@ create your new environment: conda create --name <env> --file requirements.txt
 - example: conda create --name CryptoBot --file requirements.txt
     - Note, this may take a while because the bot needs many packages and libraries installed
 
-Activate environment, install pip to conda if necessary
+Activate environment via
+- conda activate CryptoBot 
+
+install pip to conda if necessary
 
 Finally, pip install gym==0.26.1
