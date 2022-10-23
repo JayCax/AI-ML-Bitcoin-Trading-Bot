@@ -35,6 +35,8 @@ import gym
 from gym.envs.registration import register
 
 
+RESULT_SUMMARY = []
+
 #### CLASSES ####
 
 ## DEFINE TRADING AGENT
@@ -177,7 +179,7 @@ def init_agent(trading_days):
     trading_cost_bps = .0001
     time_cost_bps = .00001
 
-    f'Trading costs: {trading_cost_bps:.2%} | Time costs: {time_cost_bps:.2%}'
+    f'Trading costs: {trading_cost_bps:.2%} | Time costs: {time_cost_bps:.0%}'
 
     trading_environment = gym.make('trading-v0',
                                    ticker='BTC',
@@ -258,6 +260,11 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
         template = '{:>4d} | {} | Agent: {:>6.1%} ({:>6.1%}) | '
         template += 'Market: {:>6.1%} ({:>6.1%}) | '
         template += 'Wins: {:>5.1%} | eps: {:>6.3f}'
+
+        RESULT_SUMMARY.append([episode, format_time(total),
+                              nav_ma_100 - 1, nav_ma_10 - 1,
+                              market_nav_100 - 1, market_nav_10 - 1,
+                              win_ratio, epsilon])
         print(template.format(episode, format_time(total),
                               nav_ma_100 - 1, nav_ma_10 - 1,
                               market_nav_100 - 1, market_nav_10 - 1,
@@ -320,6 +327,15 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
     trading_environment.close()
 
     return (episode, navs, market_navs, diffs)
+
+
+def result_summary():
+    rs = RESULT_SUMMARY
+    template = '{:>4d} | {} | Agent: {:>6.1%} ({:>6.1%}) | '
+    template += 'Market: {:>6.1%} ({:>6.1%}) | '
+    template += 'Wins: {:>5.1%} | eps: {:>6.3f}'
+    for i in range(len(rs)):
+        print(template.format(rs[i][0], rs[i][1], rs[i][2], rs[i][3], rs[i][4], rs[i][5], rs[i][6], rs[i][7]))
 
 
 def store_analyze_results(episode, navs, market_navs, diffs, results_path):
@@ -397,6 +413,7 @@ def main():
     # could have run_tests return direct to store_analyze_results but keeping it seperate for now
     store_analyze_results(episode, navs, market_navs, diffs, results_path)
 
+    result_summary()
 
 if __name__ == "__main__":
     main()
