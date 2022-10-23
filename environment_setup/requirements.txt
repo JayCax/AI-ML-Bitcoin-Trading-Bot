@@ -158,3 +158,4 @@ yarl=1.8.1=py39h2bbff1b_0
 zipp=3.8.0=py39haa95532_0
 zlib=1.2.12=h8cc25b3_3
 zstd=1.5.2=h19a0ad4_0
+seaborn=0.11.2=pyhd3eb1b0_0
