@@ -2,9 +2,13 @@ from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
 import pandas as pd
 import mplfinance as mpf
 
+"""Following are Binance US API keys - not compatible for paper trading in US jurisdiction"""
+# api_key = "BTHSwDSUMGu8fK2PLTN7UtoBGAc2BMXgTLfAO3bwecfMSE5rhbnsHyYna2VzfT9z"
+# secret = "6oza52BTBzRO9CizH5opYewZudWElkzcFUl8BZ6jT3k5YBR6KK3pGCxDIry6czF7"
 
-api_key = "BTHSwDSUMGu8fK2PLTN7UtoBGAc2BMXgTLfAO3bwecfMSE5rhbnsHyYna2VzfT9z"
-secret = "6oza52BTBzRO9CizH5opYewZudWElkzcFUl8BZ6jT3k5YBR6KK3pGCxDIry6czF7"
+# testing with bitmex paper trading
+api_key = "yc9cECO9UjxiUYgEGNP8q7Yb"
+secret = "GTLDBMMXaPtM1-7g7ZQFl96Yqwqd5J1N_8CrPIbyRsgEJ2lg"
 
 # install at this step: pip install python-binance pandas mplfinance
 
