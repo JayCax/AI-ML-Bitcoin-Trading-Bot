@@ -17,7 +17,7 @@ bitmex_api_key = "yc9cECO9UjxiUYgEGNP8q7Yb"
 bitmex_secret_key = "GTLDBMMXaPtM1-7g7ZQFl96Yqwqd5J1N_8CrPIbyRsgEJ2lg"
 base_url = "https://testnet.bitmex.com/"
 
-# kept separate from Class for now
+# kept separate from Class for now 
 def render_API_data():
     # install at this step: pip install python-binance pandas mplfinance
 
@@ -44,7 +44,8 @@ def render_API_data():
 
     """
     publish head and tail of data frame 
-        open time, open, high, low, close, volume, quote asset volume, quote asset volume, number of trades, TB base vol, TB Quote Vol
+    
+    open time, open, high, low, close, volume, quote asset volume, quote asset volume, number of trades, TB base vol, TB Quote Vol
     """
 
     # set of initial 1 hour historical price data
@@ -55,15 +56,16 @@ def render_API_data():
 
     """
     publish statistics of data frame 
-        open time, open, high, low, close, volume, quote asset volume, quote asset volume, number of trades, TB base vol, TB Quote Vol
-        count
-        mean
-        std
-        min
-        25%
-        50%
-        75%
-        max
+        
+    open time, open, high, low, close, volume, quote asset volume, quote asset volume, number of trades, TB base vol, TB Quote Vol
+    count
+    mean
+    std
+    min
+    25%
+    50%
+    75%
+    max
     """
 
     # statistical data over the data frame
