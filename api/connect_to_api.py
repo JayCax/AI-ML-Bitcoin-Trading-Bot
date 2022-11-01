@@ -4,7 +4,10 @@ import mplfinance as mpf
 import bitmex
 import json
 
-"""Following are Binance US API keys - not compatible for paper trading in US jurisdiction"""
+"""
+Following are Binance US API keys - not compatible for paper trading in US jurisdiction
+    * CAN BE USED FOR OBTAINING TEST DATA / HISTORICAL VISUALIZATIONS / ETC 
+"""
 # api_key = "BTHSwDSUMGu8fK2PLTN7UtoBGAc2BMXgTLfAO3bwecfMSE5rhbnsHyYna2VzfT9z"
 # secret = "6oza52BTBzRO9CizH5opYewZudWElkzcFUl8BZ6jT3k5YBR6KK3pGCxDIry6czF7"
 
@@ -14,7 +17,7 @@ bitmex_api_key = "yc9cECO9UjxiUYgEGNP8q7Yb"
 bitmex_secret_key = "GTLDBMMXaPtM1-7g7ZQFl96Yqwqd5J1N_8CrPIbyRsgEJ2lg"
 base_url = "https://testnet.bitmex.com/"
 
-
+# kept separate from Class for now
 def render_API_data():
     # install at this step: pip install python-binance pandas mplfinance
 
@@ -39,28 +42,53 @@ def render_API_data():
 
     hist_df[numeric_columns] = hist_df[numeric_columns].apply(pd.to_numeric, axis=1)
 
+    """
+    publish head and tail of data frame 
+        open time, open, high, low, close, volume, quote asset volume, quote asset volume, number of trades, TB base vol, TB Quote Vol
+    """
+
+    # set of initial 1 hour historical price data
     print(hist_df.head())
 
+    # set of latest 1 hour historical price data
     print(hist_df.tail())
 
+    """
+    publish statistics of data frame 
+        open time, open, high, low, close, volume, quote asset volume, quote asset volume, number of trades, TB base vol, TB Quote Vol
+        count
+        mean
+        std
+        min
+        25%
+        50%
+        75%
+        max
+    """
+
+    # statistical data over the data frame
+    print(hist_df.describe())
+
+    # publish shape of historical data - how many rows and columns
     print("The shape of the data frame is: ", hist_df.shape)
 
-    # print(hist_df.describe())
-
+    # publish information about historical data, number of entries, etc.
     print(hist_df.info())
 
-    # visualization
+    """
+    visualization
+    """
 
     # determine where to close visualization - take how many rows  of data for visualization
     # IN HOURS
     hist_df.set_index('Close Time').tail(14400)
 
-    # time frame since Mar 01, 2021 - when kaggle training data terminates
+    # time frame since Mar 01, 2021 - when kaggle training data terminates approxamitely 14420 hours ago
     # IN HOURS
     mpf.plot(hist_df.set_index('Close Time').tail(14420),
              type='candle', style='charles',
              volume=True,
-             title='BTCUSDT data since March 01, 2021',
+             title='BTCUSDT data since March 01, 2021 in hour increments',
              mav=(10, 20, 30))
 
     return None
@@ -94,13 +122,6 @@ class BitmexClient:
         # # get the btc data, exchange stats for the pair
         # print(client.Instrument.Instrument_get(filter=json.dumps({'symbol': 'XBTUSD'})).result())
 
-        # symbol = 'XBTUSD'
-        # ordType = 'Market'
-        # orderQty_Buy = "100"  # Positive value to long
-        # orderQty_Sell = "-100"  # Negative value to short
-        # client.Order.Order_new(symbol=symbol, ordType=ordType, orderQty=orderQty_Buy).result()  # Long
-        # client.Order.Order_new(symbol=symbol, ordType=ordType, orderQty=orderQty_Sell).result()  # Short
-
         params = {
             "symbol": "XBTUSD",
             "side": "BUY",
@@ -110,11 +131,15 @@ class BitmexClient:
             "price": 18000,
         }
 
-        # # limit buy
-        # client.Order.Order_new(symbol='XBTUSD', orderQty=100, type="LIMIT", price=22050).result()
 
-        # spot buy
-        self.client.Order.Order_new(symbol='XBTUSD', orderQty=100).result()
+        # # limit buy
+        # self.client.Order.Order_new(symbol='XBTUSD', orderQty=100, price=18000).result()
+
+        # # spot buy
+        # self.client.Order.Order_new(symbol='XBTUSD', orderQty=100).result()
+
+        # limit sell
+        self.client.Order.Order_new(symbol='XBTUSD', orderQty=-100, price=25000).result()
 
 
 def execute_sample_trade_binance():
