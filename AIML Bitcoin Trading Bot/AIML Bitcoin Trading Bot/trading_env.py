@@ -257,7 +257,11 @@ class TradingEnvironment(gym.Env):
         self.simulator.reset()
         return self.data_source.take_step()[0]
 
-    # outstanding item
-    def render(self, mode='human'):
+    def render(self, vals_1, vals_2, mode='human'):
         """Not implemented"""
-        pass
+        self.ax1.plot(vals_1, lw=1)
+        self.ax1.set_title('Annual Returns (Moving Average)')
+        self.ax2.plot(vals_2)
+        self.ax2.set_title('Agent Outperformance (%, Moving Average)')
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
