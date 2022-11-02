@@ -46,7 +46,7 @@ Finally,
 $ pip install gym==0.26.1
 ```
 
-# Additional Packages that Need pip install 
+# Additional Packages that need pip install 
 
 - Certain exchange API modules and packages need to be pip installed 
   - These necessary pip installs include: 
