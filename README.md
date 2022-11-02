@@ -13,7 +13,7 @@ Activate the conda environment / interpreter you want to use.
 Within the repository, we have established an environment_setup folder with the 
 requirements.txt file already created. Change to this directory.
 
-# How to run the requirements file:
+# How to run the requirements.txt file:
 
 #### Proceed to the Anaconda / Conda terminal of your preferred IDE or the Anaconda / Conda powershell prompt.
 
