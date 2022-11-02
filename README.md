@@ -36,7 +36,7 @@ Create your new environment:
   - ```conda create --name CryptoBot --file requirements.txt```
       - Note, this may take a while because the bot needs many packages and libraries installed
 
-Activate environment via
+Activate environment via:
 - ```conda activate CryptoBot```
 
 Install pip to conda, if necessary
@@ -51,6 +51,6 @@ $ pip install gym==0.26.1
 
 - Certain exchange API modules and packages need to be pip installed 
   - These necessary pip installs include: 
-    - binance 
-    - bitmex
-    - ccxt
+    - binance ```$ pip install binance ```
+    - bitmex ```$ pip install bitmex ```
+    - ccxt ```$ pip install ccxt ```
