@@ -31,7 +31,9 @@ Run this command:
 cd to directory with requirements.txt file.
 
 Create your new environment: 
-- ```conda create --name <env> --file requirements.txt```
+```
+conda create --name <env> --file requirements.txt
+```
 
 - example: 
   - ```conda create --name CryptoBot --file requirements.txt```
