@@ -34,8 +34,8 @@ from keras.regularizers import l2
 import gym
 from gym.envs.registration import register
 
-
 RESULT_SUMMARY = []
+
 
 #### CLASSES ####
 
@@ -169,7 +169,7 @@ def set_up_gym(trading_days):
 
     register(
         id='trading-v0',
-        entry_point='trading_env:TradingEnvironment',       # this is where we call the trading_env.py
+        entry_point='trading_env:TradingEnvironment',  # this is where we call the trading_env.py
         max_episode_steps=trading_days
     )
 
@@ -282,9 +282,9 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
         template += 'Wins: {:>5.1%} | eps: {:>6.3f}'
 
         RESULT_SUMMARY.append([episode, format_time(total),
-                              nav_ma_100 - 1, nav_ma_10 - 1,
-                              market_nav_100 - 1, market_nav_10 - 1,
-                              win_ratio, epsilon])
+                               nav_ma_100 - 1, nav_ma_10 - 1,
+                               market_nav_100 - 1, market_nav_10 - 1,
+                               win_ratio, epsilon])
         print(template.format(episode, format_time(total),
                               nav_ma_100 - 1, nav_ma_10 - 1,
                               market_nav_100 - 1, market_nav_10 - 1,
@@ -436,6 +436,7 @@ def main():
     store_analyze_results(episode, navs, market_navs, diffs, results_path)
 
     result_summary()
+
 
 if __name__ == "__main__":
     main()

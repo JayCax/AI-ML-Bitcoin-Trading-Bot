@@ -48,6 +48,7 @@ class DataSource:
     Provides data for each new episode.
 
     """
+
     def __init__(self, trading_days=252, ticker='BTC', normalize=True):
         self.ticker = ticker
         self.trading_days = trading_days
