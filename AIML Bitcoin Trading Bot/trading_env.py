@@ -49,9 +49,9 @@ class DataSource:
 
     """
 
-    def __init__(self, trading_days=252, ticker='BTC', normalize=True):
+    def __init__(self, trading_periods=252, ticker='BTC', normalize=True):
         self.ticker = ticker
-        self.trading_days = trading_days
+        self.trading_periods = trading_periods
         self.normalize = normalize
         self.data = self.load_data()
         self.preprocess_data()
@@ -110,15 +110,15 @@ class DataSource:
 
     def reset(self):
         """Provides starting index for time series and resets step"""
-        high = len(self.data.index) - self.trading_days
+        high = len(self.data.index) - self.trading_periods
         self.offset = np.random.randint(low=0, high=high)
         self.step = 0
 
     def take_step(self):
-        """Returns data for current trading day and done signal"""
+        """Returns data for current trading day / period and done signal"""
         obs = self.data.iloc[self.offset + self.step].values
         self.step += 1
-        done = self.step > self.trading_days
+        done = self.step > self.trading_periods
         return obs, done
 
 
@@ -222,17 +222,17 @@ class TradingEnvironment(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self,
-                 trading_days=252,
+                 trading_periods=252,
                  trading_cost_bps=1e-3,
                  time_cost_bps=1e-4,
                  ticker='BTC'):
-        self.trading_days = trading_days
+        self.trading_periods = trading_periods
         self.trading_cost_bps = trading_cost_bps
         self.ticker = ticker
         self.time_cost_bps = time_cost_bps
         # calls DataSource and Trading simulator to set them up
-        self.data_source = DataSource(trading_days=self.trading_days)
-        self.simulator = TradingSimulator(steps=self.trading_days,
+        self.data_source = DataSource(trading_periods=self.trading_periods)
+        self.simulator = TradingSimulator(steps=self.trading_periods,
                                           trading_cost_bps=self.trading_cost_bps,
                                           time_cost_bps=self.time_cost_bps)
         self.action_space = spaces.Discrete(3)

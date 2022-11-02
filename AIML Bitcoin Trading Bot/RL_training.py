@@ -164,17 +164,17 @@ def format_time(t):
     return '{:02.0f}:{:02.0f}:{:02.0f}'.format(h, m, s)
 
 
-def set_up_gym(trading_days):
+def set_up_gym(trading_periods):
     ## SET UP GYM ENVIRONMENT
 
     register(
         id='trading-v0',
         entry_point='trading_env:TradingEnvironment',  # this is where we call the trading_env.py
-        max_episode_steps=trading_days
+        max_episode_steps=trading_periods
     )
 
 
-def init_agent(trading_days):
+def init_agent(trading_periods):
     ## INITIALIZING TRADING ENVIRONMENT
     trading_cost_bps = .0001
     time_cost_bps = .00001
@@ -183,7 +183,7 @@ def init_agent(trading_days):
 
     trading_environment = gym.make('trading-v0',
                                    ticker='BTC',
-                                   trading_days=trading_days,
+                                   trading_periods=trading_periods,
                                    trading_cost_bps=trading_cost_bps,
                                    time_cost_bps=time_cost_bps)
     trading_environment.seed(42)
@@ -424,12 +424,12 @@ def main():
     if not results_path.exists():
         results_path.mkdir(parents=True)
 
-    trading_days = 252
-    max_episode_steps = trading_days
+    trading_periods = 252
+    max_episode_steps = trading_periods
 
-    set_up_gym(trading_days)
+    set_up_gym(trading_periods)
 
-    trading_environment, ddqn, state_dim = init_agent(trading_days)
+    trading_environment, ddqn, state_dim = init_agent(trading_periods)
 
     episode, navs, market_navs, diffs = run_tests(trading_environment, ddqn, state_dim, max_episode_steps)
     # could have run_tests return direct to store_analyze_results but keeping it seperate for now
