@@ -1,8 +1,7 @@
 # AI-ML-Bitcoin-Trading-Bot
 OSU 467 Capstone Project - AI/ML Bitcoin Trading Bot  
 
-README
-Hello and welcome to the AI/ML Bitcoin Trading Bot Repo
+Hello and welcome to the AI/ML Bitcoin Trading Bot Repo and README
 
 # How to create the requirements file:
 
@@ -16,7 +15,7 @@ requirements file already created
 
 If you wish to run requirements.txt from scratch:
 - Create and cd to the directory you wish to put the requirements file.
-- run this command: conda list -e > requirements.txt
+- run this command: ```conda list -e > requirements.txt```
 - comment out # gym requirement
 
 # How to run the requirements file:
