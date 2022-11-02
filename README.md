@@ -20,7 +20,7 @@ If you wish to run requirements.txt from scratch:
 
 # How to run the requirements file:
 
-##### Proceed to the Anaconda / Conda terminal of your preferred IDE or the Anaconda / Conda powershell prompt.
+#### Proceed to the Anaconda / Conda terminal of your preferred IDE or the Anaconda / Conda powershell prompt.
 
 Go to conda (base) by running: 
 - ```conda deactivate```
