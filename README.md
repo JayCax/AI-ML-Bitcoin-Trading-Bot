@@ -11,13 +11,13 @@ To get started, Tensorflow must be PIP installed or built on Anaconda / Conda
 Activate the conda enviroment you want to use.
 - We recommend installation of the latest conda package manager version conda 22.9.0
 
-cd to the directory you want to put the requirements file.
-- Within the repository, we have established an environment_setup folder with the 
+Within the repository, we have established an environment_setup folder with the 
 requirements file already created 
 
-If you wish to run it from scratch: 
--run this command: conda list -e > requirements.txt
--comment out # gym requirement
+If you wish to run requirements.txt from scratch:
+- Create and cd to the directory you wish to put the requirements file.
+- run this command: conda list -e > requirements.txt
+- comment out # gym requirement
 
 # how to run the requirements file:
 
@@ -34,6 +34,14 @@ create your new environment: conda create --name <env> --file requirements.txt
 Activate environment via
 - conda activate CryptoBot 
 
-install pip to conda if necessary
+install pip to conda, if necessary
 
 Finally, pip install gym==0.26.1
+
+# Additional Packages that Need pip install 
+
+- Certain exchange API modules and packages need to be pip installed 
+  - These necessary pip installs include: 
+    - binance 
+    - bitmex
+    - ccxt

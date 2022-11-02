@@ -1,11 +1,11 @@
 # binance, ccxt and bitmex need separate pip install
 
 from binance import Client, ThreadedWebsocketManager, ThreadedDepthCacheManager
-import pandas as pd
-import mplfinance as mpf
 import bitmex
-import json
 import ccxt
+import mplfinance as mpf
+import pandas as pd
+import json
 
 """
 Following are Binance US API keys - not compatible for paper trading in US jurisdiction
