@@ -5,7 +5,7 @@ Hello and welcome to the AI/ML Bitcoin Trading Bot Repo and README
 
 # How to create the requirements file:
 
-#### *The AI/ML Bitcoin Trading Bot Repo must be built on a Conda / Anaconda interpreter and package manger*
+### *The AI/ML Bitcoin Trading Bot Repo must be built on a Conda / Anaconda interpreter & package manager*
 
 Activate the conda enviroment / interpreter you want to use.
 - We recommend installation of the latest conda package manager version conda 22.9.0
@@ -19,6 +19,8 @@ If you wish to run requirements.txt from scratch:
 - comment out # gym requirement
 
 # How to run the requirements file:
+
+### Proceed to the Anaconda / Conda terminal of your preferred IDE or the Anaconda / Conda powershell prompt
 
 Go to conda (base) by running: 
 - ```conda deactivate```
