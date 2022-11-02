@@ -42,11 +42,11 @@ Create your new environment:
 conda create --name <env> --file requirements.txt
 ```
 
-- example: 
+example: 
 ```
 conda create --name CryptoBot --file requirements.txt
 ```
-- - Note, this may take a while because the AI/ML bot needs many packages and libraries installed.
+- Note, this may take a while because the AI/ML bot needs many packages and libraries installed.
 
 Activate environment via:
 ```
