@@ -237,6 +237,26 @@ def init_agent(trading_days):
     return (trading_environment, ddqn, state_dim)
 
 
+def render_results(episode, navs, market_navs, diffs, trading_environment, render=False):
+    """ calls the render function in trading_env.py
+    This function should be edited to make any live graphs that we actualy care about. by default, rendering will be False.
+    """
+    if render:
+        # copied from store analyze results
+        results = pd.DataFrame({'Episode': list(range(1, episode + 1)),
+                                'Agent': navs,
+                                'Market': market_navs,
+                                'Difference': diffs}).set_index('Episode')
+
+        results['Strategy Wins (%)'] = (results.Difference > 0).rolling(100).sum()
+        df1 = (results[['Agent', 'Market']]
+               .sub(1)
+               .rolling(100)
+               .mean())
+        df2 = results['Strategy Wins (%)'].div(100).rolling(50).mean()
+        trading_environment.render(df1, df2)
+
+
 def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
     ## RUN EXPERIMENT ##########################
 
@@ -311,6 +331,8 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
         diffs.append(diff)
 
         if episode % 10 == 0:
+            # set render to true if you want live rendering
+            render_results(episode, navs, market_navs, diffs, trading_environment, render=False)
             track_results(episode,
                           # show mov. average results for 100 (10) periods
                           np.mean(navs[-100:]),
