@@ -28,7 +28,7 @@ Go to conda (base) by running:
 Run this command: 
 - ```conda config --append channels conda-forge```
 
-cd to directory with requirements file.
+cd to directory with requirements.txt file.
 
 Create your new environment: 
 - ```conda create --name <env> --file requirements.txt```
