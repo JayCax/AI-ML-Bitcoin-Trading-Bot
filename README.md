@@ -21,22 +21,31 @@ If you wish to run requirements.txt from scratch:
 
 # how to run the requirements file:
 
-go to conda (base) by running: conda deactivate
+Go to conda (base) by running: 
+- ```conda deactivate```
 
-run this command: conda config --append channels conda-forge
+Run this command: 
+- ```conda config --append channels conda-forge```
 
 cd to directory with requirements file
 
-create your new environment: conda create --name <env> --file requirements.txt
-- example: conda create --name CryptoBot --file requirements.txt
-    - Note, this may take a while because the bot needs many packages and libraries installed
+Create your new environment: 
+- ```conda create --name <env> --file requirements.txt```
+
+- example: 
+  - ```conda create --name CryptoBot --file requirements.txt```
+      - Note, this may take a while because the bot needs many packages and libraries installed
 
 Activate environment via
-- conda activate CryptoBot 
+- ```conda activate CryptoBot```
 
-install pip to conda, if necessary
+Install pip to conda, if necessary
 
-Finally, pip install gym==0.26.1
+Finally, 
+
+```
+$ pip install gym==0.26.1
+```
 
 # Additional Packages that Need pip install 
 
