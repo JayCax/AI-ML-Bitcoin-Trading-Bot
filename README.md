@@ -4,11 +4,11 @@ OSU 467 Capstone Project - AI/ML Bitcoin Trading Bot
 README
 Hello and welcome to the AI/ML Bitcoin Trading Bot Repo
 
-To get started, Tensorflow must be PIP installed or built on Anaconda / Conda
-
 # how to create the requirements file:
 
-Activate the conda enviroment you want to use.
+#### *The AI/ML Bitcoin Trading Bot Repo must be built on a Conda / Anaconda interpreter and package manger*
+
+Activate the conda enviroment / interpreter you want to use.
 - We recommend installation of the latest conda package manager version conda 22.9.0
 
 Within the repository, we have established an environment_setup folder with the 
