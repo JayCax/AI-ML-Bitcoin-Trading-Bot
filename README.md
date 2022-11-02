@@ -11,7 +11,7 @@ Activate the conda environment / interpreter you want to use.
 - We recommend installation of the latest conda package manager version conda 22.9.0
 
 Within the repository, we have established an environment_setup folder with the 
-requirements file already created. Change to this directory.
+requirements.txt file already created. Change to this directory.
 
 # How to run the requirements file:
 
