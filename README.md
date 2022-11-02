@@ -5,10 +5,10 @@ Hello and welcome to the AI/ML Bitcoin Trading Bot Repo and README!
 
 # Required Environment Specifications:
 
-### *The AI/ML Bitcoin Trading Bot Repo must be built on a Conda / Anaconda interpreter & package manager*
+### *The AI/ML Bitcoin Trading Bot Repo must be built on a Conda / Anaconda package & environment management system with Python 3.9 as the base interpreter*
 
 Activate the conda environment / interpreter you want to use.
-- We recommend installation of the latest conda package manager version conda 22.9.0
+- We recommend installation of the latest conda package & environment manager version conda 22.9.0 that comes with Python 3.9 as its base interpreter
 
 Within the repository, we have established an environment_setup folder with the 
 requirements.txt file already created. Change to this directory.
