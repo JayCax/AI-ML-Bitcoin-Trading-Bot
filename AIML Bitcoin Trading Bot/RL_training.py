@@ -168,17 +168,17 @@ def format_time(t):
     return '{:02.0f}:{:02.0f}:{:02.0f}'.format(h, m, s)
 
 
-def set_up_gym(trading_days):
+def set_up_gym(trading_periods):
     ## SET UP GYM ENVIRONMENT
 
     register(
         id='trading-v0',
-        entry_point='trading_env:TradingEnvironment',       # this is where we call the trading_env.py
-        max_episode_steps=trading_days
+        entry_point='trading_env:TradingEnvironment',  # this is where we call the trading_env.py
+        max_episode_steps=trading_periods
     )
 
 
-def init_agent(trading_days):
+def init_agent(trading_periods):
     ## INITIALIZING TRADING ENVIRONMENT
     trading_cost_bps = .0001
     time_cost_bps = .00001
@@ -187,7 +187,7 @@ def init_agent(trading_days):
 
     trading_environment = gym.make('trading-v0',
                                    ticker='BTC',
-                                   trading_days=trading_days,
+                                   trading_periods=trading_periods,
                                    trading_cost_bps=trading_cost_bps,
                                    time_cost_bps=time_cost_bps)
     trading_environment.seed(42)
@@ -195,7 +195,7 @@ def init_agent(trading_days):
 
     state_dim = trading_environment.observation_space.shape[0]
     num_actions = trading_environment.action_space.n
-    #max_episode_steps = trading_environment.spec.max_episode_steps
+    max_episode_steps = trading_environment.spec.max_episode_steps
 
     ## DEFINE HYPERPARAMETERS
 
@@ -241,13 +241,34 @@ def init_agent(trading_days):
     return (trading_environment, ddqn, state_dim)
 
 
+
+def render_results(episode, navs, market_navs, diffs, trading_environment, render=False):
+    """ calls the render function in trading_env.py
+    This function should be edited to make any live graphs that we actualy care about. by default, rendering will be False.
+    """
+    if render:
+        # copied from store analyze results
+        results = pd.DataFrame({'Episode': list(range(1, episode + 1)),
+                                'Agent': navs,
+                                'Market': market_navs,
+                                'Difference': diffs}).set_index('Episode')
+
+        results['Strategy Wins (%)'] = (results.Difference > 0).rolling(100).sum()
+        df1 = (results[['Agent', 'Market']]
+               .sub(1)
+               .rolling(100)
+               .mean())
+        df2 = results['Strategy Wins (%)'].div(100).rolling(50).mean()
+        trading_environment.render(df1, df2)
+
+
 def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episodes):
     ## RUN EXPERIMENT ##########################
 
     ## SET PARAMETERS
 
     total_steps = 0
-    #max_episodes = 20
+    max_episodes = 10
 
     ## INITIALIZE VARIABLES
 
@@ -315,6 +336,8 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episo
         diffs.append(diff)
 
         if episode % 10 == 0:
+            # set render to true if you want live rendering
+            render_results(episode, navs, market_navs, diffs, trading_environment, render=False)
             track_results(episode,
                           # show mov. average results for 100 (10) periods
                           np.mean(navs[-100:]),
@@ -328,11 +351,7 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episo
             print(result.tail())
             break
 
-    # assign save location
-    # save_path = 'saved_model/'
 
-    # save neural network weights
-    # ddqn.online_network.save(save_path)
 
     #trading_environment.close()
 

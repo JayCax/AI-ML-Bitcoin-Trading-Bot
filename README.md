@@ -1,39 +1,62 @@
 # AI-ML-Bitcoin-Trading-Bot
 OSU 467 Capstone Project - AI/ML Bitcoin Trading Bot  
 
-README
-Hello and welcome to the AI/ML Bitcoin Trading Bot Repo
+Hello and welcome to the AI/ML Bitcoin Trading Bot Repo and README!
 
-To get started, Tensorflow must be PIP installed or built on Anaconda / Conda
+# Required Environment Specifications:
 
-# how to create the requirements file:
+### *The AI/ML Bitcoin Trading Bot Repo must be built on a Conda / Anaconda package & environment management system with Python 3.9 as the base interpreter.*
 
-Activate the conda enviroment you want to use.
-- We recommend installation of the latest conda package manager version conda 22.9.0
+Activate the conda environment / interpreter you want to use.
+- We recommend installation of the latest Conda package & environment manager version conda 22.9.0 that comes with Python 3.9 as its base interpreter.
 
-cd to the directory you want to put the requirements file.
-- Within the repository, we have established an environment_setup folder with the 
-requirements file already created 
+Within the repository, we have established an environment_setup folder with the 
+requirements.txt file already created. Change to this directory.
 
-If you wish to run it from scratch: 
--run this command: conda list -e > requirements.txt
--comment out # gym requirement
+# How to run the requirements.txt file:
 
-# how to run the requirements file:
+#### Proceed to the Anaconda / Conda terminal of your preferred IDE or the Anaconda / Conda powershell prompt.
 
-go to conda (base) by running: conda deactivate
+Go to conda (base) by running: 
+```
+conda deactivate
+```
 
-run this command: conda config --append channels conda-forge
+Run this command: 
+```
+conda config --append channels conda-forge
+```
 
-cd to directory with requirements file
+cd to directory with requirements.txt file.
 
-create your new environment: conda create --name <env> --file requirements.txt
-- example: conda create --name CryptoBot --file requirements.txt
-    - Note, this may take a while because the bot needs many packages and libraries installed
+Create your new environment: 
+```
+conda create --name <env> --file requirements.txt
+```
 
-Activate environment via
-- conda activate CryptoBot 
+example: 
+```
+conda create --name CryptoBot --file requirements.txt
+```
+- Note, this may take a while because the AI/ML bot needs many packages and libraries installed.
 
-install pip to conda if necessary
+Activate environment via:
+```
+conda activate CryptoBot
+```
 
-Finally, pip install gym==0.26.1
+Conda install pip, if necessary.
+
+Finally, 
+
+```
+$ pip install gym==0.26.1
+```
+
+# Additional Packages that need pip install 
+
+- Certain exchange API modules and packages need to be pip installed 
+  - These necessary pip installs include: 
+    - binance ```$ pip install binance ```
+    - bitmex ```$ pip install bitmex ```
+    - ccxt ```$ pip install ccxt ```
