@@ -268,7 +268,7 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episo
     ## SET PARAMETERS
 
     total_steps = 0
-    max_episodes = 10
+
 
     ## INITIALIZE VARIABLES
 
