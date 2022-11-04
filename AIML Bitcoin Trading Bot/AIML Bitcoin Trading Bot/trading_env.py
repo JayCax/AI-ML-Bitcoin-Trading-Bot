@@ -63,7 +63,7 @@ class DataSource:
         # I edited this function quite a bit
         log.info(f'loading data for ...{self.ticker}')
         idx = pd.IndexSlice
-        with pd.HDFStore("../data/1_min_btc.h5") as store:
+        with pd.HDFStore("../data/60_min_btc.h5") as store:
             df = (store['quandl/wiki/prices']
                   .loc[idx[:, self.ticker],
                        ['open', 'high', 'low', 'close', 'volume_btc', 'volume_currency', 'weighted_price']]

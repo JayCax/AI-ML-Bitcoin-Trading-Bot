@@ -30,10 +30,11 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.optimizers import Adam
 from keras.regularizers import l2
+from keras.models import load_model
 
 import gym
 from gym.envs.registration import register
-
+from datetime import datetime
 
 RESULT_SUMMARY = []
 
@@ -57,6 +58,7 @@ class DDQNAgent:
 
         self.state_dim = state_dim
         self.num_actions = num_actions
+        self.replay_capacity = replay_capacity
         self.experience = deque([], maxlen=replay_capacity)
         self.learning_rate = learning_rate
         self.gamma = gamma
@@ -67,6 +69,8 @@ class DDQNAgent:
         self.target_network = self.build_model(trainable=False)
         self.update_target()
 
+        self.epsilon_start = epsilon_start
+        self.epsilon_end = epsilon_end
         self.epsilon = epsilon_start
         self.epsilon_decay_steps = epsilon_decay_steps
         self.epsilon_decay = (epsilon_start - epsilon_end) / epsilon_decay_steps
@@ -191,7 +195,7 @@ def init_agent(trading_days):
 
     state_dim = trading_environment.observation_space.shape[0]
     num_actions = trading_environment.action_space.n
-    max_episode_steps = trading_environment.spec.max_episode_steps
+    #max_episode_steps = trading_environment.spec.max_episode_steps
 
     ## DEFINE HYPERPARAMETERS
 
@@ -237,13 +241,13 @@ def init_agent(trading_days):
     return (trading_environment, ddqn, state_dim)
 
 
-def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
+def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episodes):
     ## RUN EXPERIMENT ##########################
 
     ## SET PARAMETERS
 
     total_steps = 0
-    max_episodes = 10
+    #max_episodes = 20
 
     ## INITIALIZE VARIABLES
 
@@ -324,18 +328,29 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps):
             print(result.tail())
             break
 
-    trading_environment.close()
+    # assign save location
+    # save_path = 'saved_model/'
 
-    return (episode, navs, market_navs, diffs)
+    # save neural network weights
+    # ddqn.online_network.save(save_path)
+
+    #trading_environment.close()
+
+    return (episode, navs, market_navs, diffs, ddqn)
 
 
-def result_summary():
+def print_result_summary(dir_name):
+
     rs = RESULT_SUMMARY
     template = '{:>4d} | {} | Agent: {:>6.1%} ({:>6.1%}) | '
     template += 'Market: {:>6.1%} ({:>6.1%}) | '
     template += 'Wins: {:>5.1%} | eps: {:>6.3f}'
-    for i in range(len(rs)):
-        print(template.format(rs[i][0], rs[i][1], rs[i][2], rs[i][3], rs[i][4], rs[i][5], rs[i][6], rs[i][7]))
+    save_path = 'saved_model/' + dir_name + "/" + "results_summary.txt"
+
+    with open(save_path, 'w') as f:
+        for i in range(len(rs)):
+            print(template.format(rs[i][0], rs[i][1], rs[i][2], rs[i][3], rs[i][4], rs[i][5], rs[i][6], rs[i][7]))
+            f.writelines(template.format(rs[i][0], rs[i][1], rs[i][2], rs[i][3], rs[i][4], rs[i][5], rs[i][6], rs[i][7]) + "\n")
 
 
 def store_analyze_results(episode, navs, market_navs, diffs, results_path):
@@ -384,36 +399,95 @@ def store_analyze_results(episode, navs, market_navs, diffs, results_path):
     fig.tight_layout()
     fig.savefig(results_path / 'performance', dpi=300)
 
+def load_file():
+
+    #save_path = 'saved_model/'
+    #savedModel = load_model(save_path)
+    #savedModel.summary()
+    pass
+
+def save_file(final_ddqn, trading_env, dir_name, trading_periods, episodes_run):
+
+    # save variables to save_data.csv
+    save_path = 'saved_model/' + dir_name + "/" + "save_data.csv"
+    with open(save_path, 'w') as f:
+        f.writelines("gamma" + "," + str(final_ddqn.gamma[0]) + "\n")
+        f.writelines("tau" + "," + str(final_ddqn.tau) + "\n")
+        f.writelines("architecture")
+        for layer in final_ddqn.architecture:
+            f.writelines("," + str(layer))
+        f.writelines("\n")
+        f.writelines("learning_rate" + "," + str(final_ddqn.learning_rate) + "\n")
+        f.writelines("l2_reg" + "," + str(float(final_ddqn.l2_reg)) + "\n")
+        f.writelines("replay_capacity" + "," + str(final_ddqn.replay_capacity) + "\n")
+        f.writelines("batch_size" + "," + str(final_ddqn.batch_size) + "\n")
+        f.writelines("epislon" + "," + str(final_ddqn.epsilon) + "\n")
+        f.writelines("epsilon_start" + "," + str(final_ddqn.epsilon_start) + "\n")
+        f.writelines("epsilon_end" + "," + str(final_ddqn.epsilon_end) + "\n")
+        f.writelines("epsilon_decay_steps" + "," + str(final_ddqn.epsilon_decay_steps) + "\n")
+        f.writelines("epsilon_exponential_decay" + "," + str(final_ddqn.epsilon_exponential_decay) + "\n")
+        f.writelines("trading_cost_bps" + "," + str(trading_env.trading_cost_bps) + "\n")
+        f.writelines("time_cost_bps" + "," + str(trading_env.time_cost_bps) + "\n")
+        f.writelines("trading_periods" + "," + str(trading_periods) + "\n")
+        f.writelines("episodes_run" + "," + str(episodes_run))
+
+
+    # save neural network weights to online_weights
+    ow_save_path = 'saved_model/' + dir_name + "/online_weights/"
+    final_ddqn.online_network.save(ow_save_path)
+    tw_save_path = 'saved_model/' + dir_name + "/target_weights/"
+    final_ddqn.target_network.save(tw_save_path)
 
 def main():
-    ## SETTINGS
-    np.random.seed(42)
-    tf.random.set_seed(42)
-    sns.set_style('whitegrid')
-
     gpu_devices = tf.config.experimental.list_physical_devices('GPU')
     if gpu_devices:
         print('Using GPU')
         tf.config.experimental.set_memory_growth(gpu_devices[0], True)
     else:
         print('Using CPU')
+    sns.set_style('whitegrid')
+    saved_episodes = 0
 
-    results_path = Path('results', 'trading_bot')
-    if not results_path.exists():
-        results_path.mkdir(parents=True)
+    load = input("Do you want to load a saved file? (y to load) :")
+    if load == "y" or load == "Y":
+        print("load is ", load)
+        max_episodes = 10
+        trading_periods = 252
+        np.random.seed(42)
+        tf.random.set_seed(42)
+        max_episode_steps = trading_periods
+        set_up_gym(trading_periods)
+        trading_environment, ddqn, state_dim = init_agent(trading_periods)
+        episode, navs, market_navs, diffs, final_ddqn = run_tests(trading_environment, ddqn, state_dim,
+                                                                  max_episode_steps, max_episodes)
+        load_file()
+    else:
+        max_episodes = int(input("How many episodes do you want to run? (ex 100) :"))
+        trading_periods = int(input("What length of trading period do you want to use (ex 252)? :"))
+        np.random.seed(42)
+        tf.random.set_seed(42)
+        max_episode_steps = trading_periods
+        set_up_gym(trading_periods)
+        trading_environment, ddqn, state_dim = init_agent(trading_periods)
+        episode, navs, market_navs, diffs, final_ddqn = run_tests(trading_environment, ddqn, state_dim,
+                                                                  max_episode_steps, max_episodes)
 
-    trading_days = 252
-    max_episode_steps = trading_days
 
-    set_up_gym(trading_days)
 
-    trading_environment, ddqn, state_dim = init_agent(trading_days)
+    dir_name = datetime.now().strftime("%d_%m_%Y_%H_%M_%S") # create a unique directory name for the files
+    save_dir = Path('saved_model', dir_name)
+    if not save_dir.exists():
+        save_dir.mkdir(parents=True)
+    # after training store, print and save results
+    store_analyze_results(episode, navs, market_navs, diffs, save_dir)
+    print_result_summary(dir_name)
+    episodes_run = max_episodes + saved_episodes
+    save_file(final_ddqn, trading_environment, dir_name, trading_periods, episodes_run)
+    trading_environment.close()
 
-    episode, navs, market_navs, diffs = run_tests(trading_environment, ddqn, state_dim, max_episode_steps)
-    # could have run_tests return direct to store_analyze_results but keeping it seperate for now
-    store_analyze_results(episode, navs, market_navs, diffs, results_path)
 
-    result_summary()
+
+
 
 if __name__ == "__main__":
     main()
