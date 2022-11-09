@@ -35,6 +35,8 @@ from keras.models import load_model
 import gym
 from gym.envs.registration import register
 from datetime import datetime
+import joblib
+import csv
 
 RESULT_SUMMARY = []
 
@@ -46,6 +48,7 @@ class DDQNAgent:
                  num_actions,
                  learning_rate,
                  gamma,
+                 epsilon,
                  epsilon_start,
                  epsilon_end,
                  epsilon_decay_steps,
@@ -54,7 +57,8 @@ class DDQNAgent:
                  architecture,
                  l2_reg,
                  tau,
-                 batch_size):
+                 batch_size,
+                 loaded):
 
         self.state_dim = state_dim
         self.num_actions = num_actions
@@ -71,14 +75,15 @@ class DDQNAgent:
 
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
-        self.epsilon = epsilon_start
+        self.epsilon = epsilon
         self.epsilon_decay_steps = epsilon_decay_steps
         self.epsilon_decay = (epsilon_start - epsilon_end) / epsilon_decay_steps
         self.epsilon_exponential_decay = epsilon_exponential_decay
-        self.epsilon_history = []
+        self.epsilon_history = []  # appears to be unused
 
-        self.total_steps = self.train_steps = 0
-        self.episodes = self.episode_length = self.train_episodes = 0
+        self.total_steps = 0
+        self.train_steps = self.train_episodes = 0   # these appear to be unused
+        self.episodes = self.episode_length  = 0
         self.steps_per_episode = []
         self.episode_reward = 0
         self.rewards_history = []
@@ -178,10 +183,18 @@ def set_up_gym(trading_periods):
     )
 
 
-def init_agent(trading_periods):
+def init_agent(trading_periods, loaded_data={}):
+
+    if not loaded_data:  #if no data loaded put our base values into loaded_data dictionary
+        loaded_data = { 'trading_cost_bps': 0.0001, 'time_cost_bps': 1e-05, 'gamma': 0.99, 'tau': 100,
+                        'architecture': [256, 256], 'learning_rate': 0.0001, 'l2_reg': 1e-06,
+                        'replay_capacity': 1000000, 'batch_size': 4096, 'epsilon': 1.0, 'epsilon_start': 1.0,
+                        'epsilon_end': 0.01, 'epsilon_decay_steps': 250, 'epsilon_exponential_decay': 0.99}
+
+
     ## INITIALIZING TRADING ENVIRONMENT
-    trading_cost_bps = .0001
-    time_cost_bps = .00001
+    trading_cost_bps = loaded_data["trading_cost_bps"]
+    time_cost_bps = loaded_data["time_cost_bps"]
 
     f'Trading costs: {trading_cost_bps:.2%} | Time costs: {time_cost_bps:.0%}'
 
@@ -190,7 +203,18 @@ def init_agent(trading_periods):
                                    trading_periods=trading_periods,
                                    trading_cost_bps=trading_cost_bps,
                                    time_cost_bps=time_cost_bps)
-    trading_environment.seed(42)
+
+    if 'episodes_run' in loaded_data:
+        rseed = loaded_data["episodes_run"]  # for loaded values use episodes run as the seed
+        loaded = True
+    else:
+        rseed = 42
+        loaded = False
+    #print("rseed is ", rseed)
+    trading_environment.seed(rseed)
+    #np.random.seed(rseed)
+    #tf.random.set_seed(rseed)
+
     ## GET ENVIRONMENT PARAMS
 
     state_dim = trading_environment.observation_space.shape[0]
@@ -199,26 +223,27 @@ def init_agent(trading_periods):
 
     ## DEFINE HYPERPARAMETERS
 
-    gamma = .99,  # discount factor
-    tau = 100  # target network update frequency
+    gamma = loaded_data["gamma"]  # discount factor
+    tau = loaded_data["tau"]     # target network update frequency
 
     ## NN ARCHITECTURE
 
-    architecture = (256, 256)  # units per layer
-    learning_rate = 0.0001  # learning rate
-    l2_reg = 1e-6  # L2 regularization
+    architecture = loaded_data["architecture"]   # units per layer
+    learning_rate = loaded_data["learning_rate"]      # learning rate
+    l2_reg = loaded_data["l2_reg"]              # L2 regularization
 
     ## EXPIRIENCE REPLAY
 
-    replay_capacity = int(1e6)
-    batch_size = 4096
+    replay_capacity = loaded_data["replay_capacity"]
+    batch_size = loaded_data["batch_size"]
 
     ## e-GREEDY POLICY
 
-    epsilon_start = 1.0
-    epsilon_end = .01
-    epsilon_decay_steps = 250
-    epsilon_exponential_decay = .99
+    epsilon = loaded_data["epsilon"]
+    epsilon_start = loaded_data["epsilon_start"]
+    epsilon_end = loaded_data["epsilon_end"]
+    epsilon_decay_steps = loaded_data["epsilon_decay_steps"]
+    epsilon_exponential_decay = loaded_data["epsilon_exponential_decay"]
 
     ## CREATE DDQN AGENT
     tf.keras.backend.clear_session()
@@ -227,6 +252,7 @@ def init_agent(trading_periods):
                      num_actions=num_actions,
                      learning_rate=learning_rate,
                      gamma=gamma,
+                     epsilon=epsilon,
                      epsilon_start=epsilon_start,
                      epsilon_end=epsilon_end,
                      epsilon_decay_steps=epsilon_decay_steps,
@@ -235,7 +261,8 @@ def init_agent(trading_periods):
                      architecture=architecture,
                      l2_reg=l2_reg,
                      tau=tau,
-                     batch_size=batch_size)
+                     batch_size=batch_size,
+                     loaded=loaded)
 
     ddqn.online_network.summary()
     return (trading_environment, ddqn, state_dim)
@@ -262,17 +289,19 @@ def render_results(episode, navs, market_navs, diffs, trading_environment, rende
         trading_environment.render(df1, df2)
 
 
-def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episodes):
+def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episodes, loaded_data):
     ## RUN EXPERIMENT ##########################
-
-    ## SET PARAMETERS
-
-    total_steps = 0
-
 
     ## INITIALIZE VARIABLES
 
-    episode_time, navs, market_navs, diffs, episode_eps = [], [], [], [], []
+    episode_time, episode_eps = [], []
+    # navs, market_navs, diffs, = [], [], []
+    if not loaded_data:  # if we are not using loaded data
+        navs, market_navs, diffs, = [], [], []
+    else:
+        navs = loaded_data["navs"]
+        market_navs = loaded_data["market_navs"]
+        diffs = loaded_data["diffs"]
 
     ## VISUALIZATION
 
@@ -298,7 +327,6 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episo
     ## TRAIN AGENT
 
     start = time()
-    results = []
 
     for episode in range(1, max_episodes + 1):
         this_state = trading_environment.reset()
@@ -351,10 +379,6 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episo
             print(result.tail())
             break
 
-
-
-    #trading_environment.close()
-
     return (episode, navs, market_navs, diffs, ddqn)
 
 
@@ -374,7 +398,10 @@ def print_result_summary(dir_name):
 
 def store_analyze_results(episode, navs, market_navs, diffs, results_path):
     ## STORE RESULTS
-
+    print("TYPES : ", type(episode), type(navs), type(market_navs), type(diffs))
+    print(" episodes number is ", episode, "LENGTHS : ", len(navs), len(market_navs), len(diffs))
+    ########################remove next line ###############
+    episode += 100
     results = pd.DataFrame({'Episode': list(range(1, episode + 1)),
                             'Agent': navs,
                             'Market': market_navs,
@@ -418,19 +445,41 @@ def store_analyze_results(episode, navs, market_navs, diffs, results_path):
     fig.tight_layout()
     fig.savefig(results_path / 'performance', dpi=300)
 
-def load_file():
+def load_saved_data(dir_name):
+    loaded_data = {}
 
+    # read variables to save_data.csv
+    load_path = 'saved_model/' + dir_name + "/" + "save_data.csv"
+    with open(load_path, mode='r') as load_file:
+        csv_reader = csv.reader(load_file, delimiter=',')
+        for row in csv_reader:
+            if len(row) > 2:
+                #loaded_data[row[0]] = [x for x in row[1:]]
+                loaded_data[row[0]] = [int(x) for x in row[1:]]
+            else:
+                value = float(row[1])         # convert to float first then switch to int if it should be an int
+                loaded_data[row[0]] = (value, int(value))[row[1].find(".") == -1] # key is variable name
+                #loaded_data[row[0]] = row[1]  # key is variable name, value is value od saved variable
+    print(loaded_data["gamma"],  "  is gamma")
+    # value = (value, int(value)) [row[1].find(".") == -1]
+    print("Value is :", value)
+    jl_load_path = 'saved_model/' + dir_name + "/"
+    loaded_data["navs"] = joblib.load(jl_load_path + 'navs.sav')
+    loaded_data["market_navs"] = joblib.load(jl_load_path + 'market_navs.sav')
+    loaded_data["diffs"] = joblib.load(jl_load_path + 'diffs.sav')
+
+    #print(loaded_data)
     #save_path = 'saved_model/'
     #savedModel = load_model(save_path)
     #savedModel.summary()
-    pass
+    return loaded_data
 
-def save_file(final_ddqn, trading_env, dir_name, trading_periods, episodes_run):
+def save_file(final_ddqn, trading_env, dir_name, trading_periods, episodes_run, navs, market_navs, diffs):
 
     # save variables to save_data.csv
     save_path = 'saved_model/' + dir_name + "/" + "save_data.csv"
     with open(save_path, 'w') as f:
-        f.writelines("gamma" + "," + str(final_ddqn.gamma[0]) + "\n")
+        f.writelines("gamma" + "," + str(final_ddqn.gamma) + "\n")
         f.writelines("tau" + "," + str(final_ddqn.tau) + "\n")
         f.writelines("architecture")
         for layer in final_ddqn.architecture:
@@ -440,7 +489,7 @@ def save_file(final_ddqn, trading_env, dir_name, trading_periods, episodes_run):
         f.writelines("l2_reg" + "," + str(float(final_ddqn.l2_reg)) + "\n")
         f.writelines("replay_capacity" + "," + str(final_ddqn.replay_capacity) + "\n")
         f.writelines("batch_size" + "," + str(final_ddqn.batch_size) + "\n")
-        f.writelines("epislon" + "," + str(final_ddqn.epsilon) + "\n")
+        f.writelines("epsilon" + "," + str(final_ddqn.epsilon) + "\n")
         f.writelines("epsilon_start" + "," + str(final_ddqn.epsilon_start) + "\n")
         f.writelines("epsilon_end" + "," + str(final_ddqn.epsilon_end) + "\n")
         f.writelines("epsilon_decay_steps" + "," + str(final_ddqn.epsilon_decay_steps) + "\n")
@@ -450,6 +499,11 @@ def save_file(final_ddqn, trading_env, dir_name, trading_periods, episodes_run):
         f.writelines("trading_periods" + "," + str(trading_periods) + "\n")
         f.writelines("episodes_run" + "," + str(episodes_run))
 
+    # save the nav, market_nav and diffs to seperate files as they are large lists (1 value per episode)
+    jl_save_path = 'saved_model/' + dir_name + "/"
+    joblib.dump(navs, jl_save_path + 'navs.sav')
+    joblib.dump(market_navs, jl_save_path + 'market_navs.sav')
+    joblib.dump(diffs, jl_save_path + 'diffs.sav')
 
     # save neural network weights to online_weights
     ow_save_path = 'saved_model/' + dir_name + "/online_weights/"
@@ -465,21 +519,21 @@ def main():
     else:
         print('Using CPU')
     sns.set_style('whitegrid')
-    saved_episodes = 0
 
     load = input("Do you want to load a saved file? (y to load) :")
     if load == "y" or load == "Y":
-        print("load is ", load)
+        loaded_data = load_saved_data("100steps")
         max_episodes = 10
         trading_periods = 252
-        np.random.seed(42)
-        tf.random.set_seed(42)
+        rseed = loaded_data["episodes_run"]   # use number of episodes run as the random seed
+        np.random.seed(rseed)
+        tf.random.set_seed(rseed)
         max_episode_steps = trading_periods
         set_up_gym(trading_periods)
-        trading_environment, ddqn, state_dim = init_agent(trading_periods)
+        trading_environment, ddqn, state_dim = init_agent(trading_periods, loaded_data)
+        #exit(0)
         episode, navs, market_navs, diffs, final_ddqn = run_tests(trading_environment, ddqn, state_dim,
-                                                                  max_episode_steps, max_episodes)
-        load_file()
+                                                                 max_episode_steps, max_episodes, loaded_data)
     else:
         max_episodes = int(input("How many episodes do you want to run? (ex 100) :"))
         trading_periods = int(input("What length of trading period do you want to use (ex 252)? :"))
@@ -487,26 +541,22 @@ def main():
         tf.random.set_seed(42)
         max_episode_steps = trading_periods
         set_up_gym(trading_periods)
-        trading_environment, ddqn, state_dim = init_agent(trading_periods)
+        trading_environment, ddqn, state_dim = init_agent(trading_periods, {})
         episode, navs, market_navs, diffs, final_ddqn = run_tests(trading_environment, ddqn, state_dim,
-                                                                  max_episode_steps, max_episodes)
-
+                                                                  max_episode_steps, max_episodes, {})
 
 
     dir_name = datetime.now().strftime("%d_%m_%Y_%H_%M_%S") # create a unique directory name for the files
     save_dir = Path('saved_model', dir_name)
     if not save_dir.exists():
         save_dir.mkdir(parents=True)
+
     # after training store, print and save results
     store_analyze_results(episode, navs, market_navs, diffs, save_dir)
     print_result_summary(dir_name)
-    episodes_run = max_episodes + saved_episodes
-    save_file(final_ddqn, trading_environment, dir_name, trading_periods, episodes_run)
+    save_file(final_ddqn, trading_environment, dir_name, trading_periods, max_episodes, navs, market_navs, diffs)
+
     trading_environment.close()
-
-
-
-
 
 if __name__ == "__main__":
     main()
