@@ -58,20 +58,30 @@ class DDQNAgent:
                  l2_reg,
                  tau,
                  batch_size,
-                 loaded):
+                 experience,
+                 load_path,
+                 loaded,
+                 total_steps,
+                 episodes,
+                 steps_per_episode,
+                 rewards_history,
+                 losses):
 
         self.state_dim = state_dim
         self.num_actions = num_actions
         self.replay_capacity = replay_capacity
-        self.experience = deque([], maxlen=replay_capacity)
+        self.experience = experience
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.architecture = architecture
         self.l2_reg = l2_reg
-
-        self.online_network = self.build_model()
-        self.target_network = self.build_model(trainable=False)
-        self.update_target()
+        if loaded:
+            self.online_network = load_model(load_path + 'online_weights/')
+            self.target_network = load_model(load_path + 'target_weights/')
+        else:
+            self.online_network = self.build_model()
+            self.target_network = self.build_model(trainable=False)
+            self.update_target()
 
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
@@ -81,16 +91,17 @@ class DDQNAgent:
         self.epsilon_exponential_decay = epsilon_exponential_decay
         self.epsilon_history = []  # appears to be unused
 
-        self.total_steps = 0
+        self.total_steps = total_steps
+        self.episodes = episodes
         self.train_steps = self.train_episodes = 0   # these appear to be unused
-        self.episodes = self.episode_length  = 0
-        self.steps_per_episode = []
+        self.episode_length = 0
+        self.steps_per_episode = steps_per_episode
         self.episode_reward = 0
-        self.rewards_history = []
+        self.rewards_history = rewards_history
 
         self.batch_size = batch_size
         self.tau = tau
-        self.losses = []
+        self.losses = losses
         self.idx = tf.range(batch_size)
         self.train = True
 
@@ -189,7 +200,7 @@ def init_agent(trading_periods, loaded_data={}):
         loaded_data = { 'trading_cost_bps': 0.0001, 'time_cost_bps': 1e-05, 'gamma': 0.99, 'tau': 100,
                         'architecture': [256, 256], 'learning_rate': 0.0001, 'l2_reg': 1e-06,
                         'replay_capacity': 1000000, 'batch_size': 4096, 'epsilon': 1.0, 'epsilon_start': 1.0,
-                        'epsilon_end': 0.01, 'epsilon_decay_steps': 250, 'epsilon_exponential_decay': 0.99}
+                        'epsilon_end': 0.01, 'epsilon_decay_steps': 250, 'epsilon_exponential_decay': 0.99,}
 
 
     ## INITIALIZING TRADING ENVIRONMENT
@@ -207,13 +218,22 @@ def init_agent(trading_periods, loaded_data={}):
     if 'episodes_run' in loaded_data:
         rseed = loaded_data["episodes_run"]  # for loaded values use episodes run as the seed
         loaded = True
+        load_path = loaded_data["dir_location"]
+        total_steps = loaded_data["total_steps"]
+        episodes = loaded_data["episodes_run"]
+        steps_per_episode = loaded_data["steps_per_episode"]
+        rewards_history = loaded_data["rewards_history"]
+        losses = loaded_data["losses"]
     else:
         rseed = 42
         loaded = False
-    #print("rseed is ", rseed)
+        load_path = ""
+        total_steps = episodes = 0
+        steps_per_episode = []
+        rewards_history = []
+        losses = []
+
     trading_environment.seed(rseed)
-    #np.random.seed(rseed)
-    #tf.random.set_seed(rseed)
 
     ## GET ENVIRONMENT PARAMS
 
@@ -236,6 +256,10 @@ def init_agent(trading_periods, loaded_data={}):
 
     replay_capacity = loaded_data["replay_capacity"]
     batch_size = loaded_data["batch_size"]
+    if loaded:
+        experience = loaded_data["experience"]
+    else:
+        experience = deque([], maxlen=replay_capacity)
 
     ## e-GREEDY POLICY
 
@@ -262,7 +286,15 @@ def init_agent(trading_periods, loaded_data={}):
                      l2_reg=l2_reg,
                      tau=tau,
                      batch_size=batch_size,
-                     loaded=loaded)
+                     experience=experience,
+                     load_path=load_path,
+                     loaded=loaded,
+                     total_steps=total_steps,
+                     episodes=episodes,
+                     steps_per_episode=steps_per_episode,
+                     rewards_history=rewards_history,
+                     losses=losses
+                     )
 
     ddqn.online_network.summary()
     return (trading_environment, ddqn, state_dim)
@@ -298,10 +330,13 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episo
     # navs, market_navs, diffs, = [], [], []
     if not loaded_data:  # if we are not using loaded data
         navs, market_navs, diffs, = [], [], []
+        start_episode = 1
     else:
         navs = loaded_data["navs"]
         market_navs = loaded_data["market_navs"]
         diffs = loaded_data["diffs"]
+        max_episodes += loaded_data["episodes_run"]
+        start_episode = loaded_data["episodes_run"] + 1
 
     ## VISUALIZATION
 
@@ -328,7 +363,7 @@ def run_tests(trading_environment, ddqn, state_dim, max_episode_steps, max_episo
 
     start = time()
 
-    for episode in range(1, max_episodes + 1):
+    for episode in range(start_episode, max_episodes + 1):
         this_state = trading_environment.reset()
         for episode_step in range(max_episode_steps):
             action = ddqn.epsilon_greedy_policy(this_state.reshape(-1, state_dim))
@@ -398,10 +433,8 @@ def print_result_summary(dir_name):
 
 def store_analyze_results(episode, navs, market_navs, diffs, results_path):
     ## STORE RESULTS
-    print("TYPES : ", type(episode), type(navs), type(market_navs), type(diffs))
+
     print(" episodes number is ", episode, "LENGTHS : ", len(navs), len(market_navs), len(diffs))
-    ########################remove next line ###############
-    episode += 100
     results = pd.DataFrame({'Episode': list(range(1, episode + 1)),
                             'Agent': navs,
                             'Market': market_navs,
@@ -454,24 +487,23 @@ def load_saved_data(dir_name):
         csv_reader = csv.reader(load_file, delimiter=',')
         for row in csv_reader:
             if len(row) > 2:
-                #loaded_data[row[0]] = [x for x in row[1:]]
                 loaded_data[row[0]] = [int(x) for x in row[1:]]
             else:
                 value = float(row[1])         # convert to float first then switch to int if it should be an int
                 loaded_data[row[0]] = (value, int(value))[row[1].find(".") == -1] # key is variable name
-                #loaded_data[row[0]] = row[1]  # key is variable name, value is value od saved variable
-    print(loaded_data["gamma"],  "  is gamma")
-    # value = (value, int(value)) [row[1].find(".") == -1]
-    print("Value is :", value)
+
     jl_load_path = 'saved_model/' + dir_name + "/"
+    loaded_data["dir_location"] = jl_load_path
     loaded_data["navs"] = joblib.load(jl_load_path + 'navs.sav')
     loaded_data["market_navs"] = joblib.load(jl_load_path + 'market_navs.sav')
     loaded_data["diffs"] = joblib.load(jl_load_path + 'diffs.sav')
+    loaded_data["experience"] = joblib.load(jl_load_path + 'experience.sav')
+    loaded_data["losses"] = joblib.load(jl_load_path + 'losses.sav')
+    loaded_data["steps_per_episode"] = joblib.load(jl_load_path + 'steps_per_episode.sav')
+    loaded_data["rewards_history"] = joblib.load(jl_load_path + 'rewards_history.sav')
+    global RESULT_SUMMARY
+    RESULT_SUMMARY = joblib.load(jl_load_path + 'result_summary.sav')
 
-    #print(loaded_data)
-    #save_path = 'saved_model/'
-    #savedModel = load_model(save_path)
-    #savedModel.summary()
     return loaded_data
 
 def save_file(final_ddqn, trading_env, dir_name, trading_periods, episodes_run, navs, market_navs, diffs):
@@ -497,13 +529,19 @@ def save_file(final_ddqn, trading_env, dir_name, trading_periods, episodes_run, 
         f.writelines("trading_cost_bps" + "," + str(trading_env.trading_cost_bps) + "\n")
         f.writelines("time_cost_bps" + "," + str(trading_env.time_cost_bps) + "\n")
         f.writelines("trading_periods" + "," + str(trading_periods) + "\n")
-        f.writelines("episodes_run" + "," + str(episodes_run))
+        f.writelines("episodes_run" + "," + str(episodes_run) + "\n")
+        f.writelines("total_steps" + "," + str(final_ddqn.total_steps))
 
     # save the nav, market_nav and diffs to seperate files as they are large lists (1 value per episode)
     jl_save_path = 'saved_model/' + dir_name + "/"
     joblib.dump(navs, jl_save_path + 'navs.sav')
     joblib.dump(market_navs, jl_save_path + 'market_navs.sav')
     joblib.dump(diffs, jl_save_path + 'diffs.sav')
+    joblib.dump(final_ddqn.experience, jl_save_path + 'experience.sav')
+    joblib.dump(final_ddqn.losses, jl_save_path + 'losses.sav')
+    joblib.dump(final_ddqn.steps_per_episode, jl_save_path + 'steps_per_episode.sav')
+    joblib.dump(final_ddqn.rewards_history, jl_save_path + 'rewards_history.sav')
+    joblib.dump(RESULT_SUMMARY, jl_save_path + 'result_summary.sav')
 
     # save neural network weights to online_weights
     ow_save_path = 'saved_model/' + dir_name + "/online_weights/"
@@ -522,16 +560,16 @@ def main():
 
     load = input("Do you want to load a saved file? (y to load) :")
     if load == "y" or load == "Y":
-        loaded_data = load_saved_data("100steps")
-        max_episodes = 10
-        trading_periods = 252
+        load_dir_name = input("What is the name of the directory with the saved data you want to use? :")
+        loaded_data = load_saved_data(load_dir_name)
+        max_episodes = int(input("How many episodes do you want to run? (ex 100) :"))
+        trading_periods = loaded_data["trading_periods"]
         rseed = loaded_data["episodes_run"]   # use number of episodes run as the random seed
         np.random.seed(rseed)
         tf.random.set_seed(rseed)
         max_episode_steps = trading_periods
         set_up_gym(trading_periods)
         trading_environment, ddqn, state_dim = init_agent(trading_periods, loaded_data)
-        #exit(0)
         episode, navs, market_navs, diffs, final_ddqn = run_tests(trading_environment, ddqn, state_dim,
                                                                  max_episode_steps, max_episodes, loaded_data)
     else:
@@ -554,8 +592,7 @@ def main():
     # after training store, print and save results
     store_analyze_results(episode, navs, market_navs, diffs, save_dir)
     print_result_summary(dir_name)
-    save_file(final_ddqn, trading_environment, dir_name, trading_periods, max_episodes, navs, market_navs, diffs)
-
+    save_file(final_ddqn, trading_environment, dir_name, trading_periods, episode, navs, market_navs, diffs)
     trading_environment.close()
 
 if __name__ == "__main__":
