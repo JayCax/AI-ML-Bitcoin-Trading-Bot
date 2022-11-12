@@ -73,7 +73,7 @@ class BitmexClient:
                                                                     symbol='XBTUSDT',
                                                                     reverse=True).result()[0][0]
 
-        remove_keys = ["trades", "turnover", "homeNotional", "foreignNotional", "lastSize"]
+        remove_keys = ["trades", "turnover", "lastSize"]
 
         self.cleaned_btc_data = {key: self.cleaned_btc_data[key]
                      for key in self.cleaned_btc_data if key not in remove_keys}
@@ -108,7 +108,7 @@ class BitmexClient:
         # self.client.Order.Order_cancelAll().result()
 
         # publish all historical orders
-        # USE ETHAN IMPLEMENTATION
+        # USE ETHANS IMPLEMENTATION
         for i in self.client.Order.Order_getOrders(symbol="XBTUSDT").result()[0]:
             print(i)
 
@@ -124,12 +124,14 @@ class BitmexClient:
                 pass
 
     def save_funds_data(self):
-        # print(self.client.User.User_getWallet(currency="USDT").result())
-        # print(self.client.User.User_getWallet().result()[0][0])
 
-        # problematic since this is pulling from perp account - something like this
-        # to get overall pnl
-        print(self.client.User.User_getWalletSummary().result()[0][0])
+        # # problematic since this is pulling from perp account - something like this
+        # # to get overall pnl
+        # print(self.client.User.User_getWalletSummary().result()[0][0])
+
+        # actual - ALL PNL history - we want latest, index with [0]
+        for i in self.client.User.User_getWalletHistory().result()[0]:
+            print(i["amount"])
 
         # save to csv here
 
