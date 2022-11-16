@@ -11,6 +11,8 @@ import numpy as np
 import talib
 import sys
 import bitmex_cleaning
+import csv
+
 
 # import AIML Bitcoin Trading Bot
 
@@ -263,11 +265,50 @@ class LiveTrading:
             if total_counter >= 3600:           # quit the function after # loops
                 break
         # record details in a csv file?
-        self.record_portfolio()  # this function still needs to be implemented
+        self.obtain_record_portfolio()  # this function still needs to be implemented
 
-    def record_portfolio(self):
+    def obtain_record_portfolio(self):
         # Save some details of the portfolio to a csv file?
-        pass
+
+        # # problematic since this is pulling from perp account - something like this
+        # # to get overall pnl
+        # print(self.client.User.User_getWalletSummary().result()[0][0])
+
+        # port_header = ["Timestamp", "Symbol", "Open", "High", "Low", "Close", "Volume", "Vwap", "HomeNotional", "ForeignNotional"]
+        # port_data = "portfolio_data.csv"
+        # print(self.client.User.User_getMargin().result())
+
+        # print(self.client.User.User_getWallet.result())
+
+        pnl_header = ["PNL", "TotalUSDAccountValue"]
+        pnl_data = "pnl_data.csv"
+
+        pnl_list = []
+
+        # actual - ALL PNL history - we want latest, index with [0]
+        for i in self.client.User.User_getWalletHistory().result()[0]:
+            pnl_list.append(i["amount"])
+
+        pnl_list = [round(i*0.1, 2) for i in pnl_list]
+
+        # save PNL to csv file here
+        with open(pnl_data, "w+", encoding="UTF8", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(pnl_header)
+            wal_hist = self.client.User.User_getWalletHistory().result()[0]
+            for i in range(len(wal_hist)):
+                if i != len(wal_hist)-1:
+                    pnl_val = wal_hist[i]["amount"]
+                    pnl_val *= 0.1
+                    pnl_val = round(pnl_val, 2)
+                    writer.writerow([str(pnl_val), str(sum(pnl_list[i:]))])
+                else:
+                    pnl_val = wal_hist[i]["amount"]
+                    pnl_val *= 0.1
+                    pnl_val = round(pnl_val, 2)
+                    writer.writerow([str(pnl_val), str(pnl_val)])
+
+        return None
 
 
 if __name__ == "__main__":
