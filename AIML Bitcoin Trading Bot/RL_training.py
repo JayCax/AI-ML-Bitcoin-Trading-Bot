@@ -197,7 +197,7 @@ def set_up_gym(trading_periods):
 def init_agent(trading_periods, loaded_data={}):
 
     if not loaded_data:  #if no data loaded put our base values into loaded_data dictionary
-        loaded_data = { 'trading_cost_bps': 0.0001, 'time_cost_bps': 1e-05, 'gamma': 0.99, 'tau': 100,
+        loaded_data = { 'trading_cost_bps': 0.0001, 'time_cost_bps': .00001, 'gamma': 0.99, 'tau': 100,
                         'architecture': [256, 256], 'learning_rate': 0.0001, 'l2_reg': 1e-06,
                         'replay_capacity': 1000000, 'batch_size': 4096, 'epsilon': 1.0, 'epsilon_start': 1.0,
                         'epsilon_end': 0.01, 'epsilon_decay_steps': 250, 'epsilon_exponential_decay': 0.99,}
@@ -232,7 +232,7 @@ def init_agent(trading_periods, loaded_data={}):
         steps_per_episode = []
         rewards_history = []
         losses = []
-
+    print("seed ",rseed)
     trading_environment.seed(rseed)
 
     ## GET ENVIRONMENT PARAMS
@@ -490,7 +490,8 @@ def load_saved_data(dir_name):
                 loaded_data[row[0]] = [int(x) for x in row[1:]]
             else:
                 value = float(row[1])         # convert to float first then switch to int if it should be an int
-                loaded_data[row[0]] = (value, int(value))[row[1].find(".") == -1] # key is variable name
+                # key is variable name, check if decimal or scientific notation ex e-05
+                loaded_data[row[0]] = (value, int(value))[row[1].find(".") == -1 and row[1].find("e-") == -1]
 
     jl_load_path = 'saved_model/' + dir_name + "/"
     loaded_data["dir_location"] = jl_load_path
@@ -503,7 +504,6 @@ def load_saved_data(dir_name):
     loaded_data["rewards_history"] = joblib.load(jl_load_path + 'rewards_history.sav')
     global RESULT_SUMMARY
     RESULT_SUMMARY = joblib.load(jl_load_path + 'result_summary.sav')
-
     return loaded_data
 
 def save_file(final_ddqn, trading_env, dir_name, trading_periods, episodes_run, navs, market_navs, diffs):
