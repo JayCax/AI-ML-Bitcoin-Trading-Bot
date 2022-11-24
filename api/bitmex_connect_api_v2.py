@@ -82,15 +82,19 @@ class BitmexClient:
                                                                     symbol='XBTUSDT',
                                                                     reverse=True).result()[0][0]
 
+        # foreignNotional = the amount that we've spent USDT, definitely not what we want
         remove_keys = ['symbol', "trades", "turnover", "lastSize", "homeNotional", "foreignNotional"]
         # 'timestamp', 'symbol',
         self.cleaned_btc_data = {key: self.cleaned_btc_data[key]
                                  for key in self.cleaned_btc_data if key not in remove_keys}
-        # replace some keys with appropriate names # Need to make sure that this function is getting the right pieces of data.
-        replacement = {"volume": "volume_btc", "vwap": "weighted_price"}  # foreignNotional = the amount that we've spent USDT, definitely not what we want
+        # replace some keys with appropriate names # Need to make sure that this function is getting the right pieces
+        # of data.
+        replacement = {"volume": "volume_btc", "vwap": "weighted_price"}
         for k, v in list(self.cleaned_btc_data.items()):
             self.cleaned_btc_data[replacement.get(k, k)] = self.cleaned_btc_data.pop(k)
-        self.cleaned_btc_data["volume_currency"] = self.cleaned_btc_data["volume_btc"]*self.cleaned_btc_data["close"]         # volume_currency is volume_btc*close
+
+        # volume_currency is volume_btc*close
+        self.cleaned_btc_data["volume_currency"] = self.cleaned_btc_data["volume_btc"]*self.cleaned_btc_data["close"]
         # reorder dictionary to match
         temp = self.cleaned_btc_data["weighted_price"]
         del self.cleaned_btc_data["weighted_price"]
@@ -163,7 +167,6 @@ class LiveTrading:
         from sklearn.preprocessing import scale
 
         # this is a good place to add other things that we can change, needs to match the function in RL training
-        # print(data)
         self.data['returns'] = self.data.close.pct_change()
         self.data['ret_2'] = self.data.close.pct_change(2)
         self.data['ret_5'] = self.data.close.pct_change(5)
@@ -246,7 +249,8 @@ class LiveTrading:
         print("Starting...")
 
         while True:
-            while time.time() - current_time >= num_seconds_between_query:  # note this number is the number of seconds between every query
+            # note this number is the number of seconds between every query
+            while time.time() - current_time >= num_seconds_between_query:
                 current_time = time.time()
                 self.get_data()
                 if counter > num_minutes_avg:
