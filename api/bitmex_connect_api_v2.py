@@ -12,6 +12,7 @@ import sys
 import bitmex_cleaning
 import csv
 
+from Get_Trade import get_trade, load_NN, close_NN
 # import AIML Bitcoin Trading Bot
 
 # testing with bitmex paper trading
@@ -157,12 +158,12 @@ class LiveTrading:
         self.data = self.data.loc[:, ['returns'] + list(features)]
         print(self.data)
 
-    def get_trade(self):
+    #def get_trade(self):
         # will be implemented by Dave
         # load model
-        data = self.data
+        #data = self.data
         # returns -1 for short, 0 for closed, +1 for long
-        return random.randint(-1, 1)
+        #return random.randint(-1, 1)
 
     def get_data(self):
         """
@@ -223,7 +224,7 @@ class LiveTrading:
         counter = 0
         current_time = time.time() - num_seconds_between_query
         print("Starting...")
-
+        ddqn, state_dim, trading_environment = load_NN()  # calls load_NN from Get_Trade.py
         while True:
             while time.time() - current_time >= num_seconds_between_query:  # note this number is the number of seconds between every query
                 current_time = time.time()
@@ -234,10 +235,15 @@ class LiveTrading:
                                                                    minutes=num_minutes_avg)
                     self.load_data()
                     self.preprocess_data()
-                    # decide what the trade will be: buy, long, short
-                    Trade = self.get_trade()  # this function definitely needs to be implemented
-                    # make the trade
-                    self.make_trade(Trade)  # this function needs to be worked on
+                    # need to wait long enough for data to start getting put into dataframe
+                    if not self.data.empty:  # ensure there is data as it takes a while before data is populated
+                        # decide what the trade will be: buy, long, short
+                        # test_data = np.array([0.03452198, -0.50615868, -2.82824341, -2.90283056, -3.45309186, 0.52710094, -11.19257768, 9.95488124, -0.2326905, -1.07325023])
+                        current_state = self.data.tail(1).to_numpy()  # gets most recent data and converts to numpy array
+                        trade = get_trade(ddqn, state_dim, current_state)
+                        print("trade is ", trade)
+                        # make the trade
+                        self.make_trade(trade)  # this function needs to be worked on
                     # reset counter
                     counter = 0
                 counter += 1
@@ -248,7 +254,7 @@ class LiveTrading:
         self.bitmex_client.client.Order.Order_closePosition(symbol='XBTUSDT').result()
         # record details in a csv file?
         self.obtain_record_portfolio()  # this function still needs to be implemented
-
+        close_NN(trading_environment)
     def obtain_record_portfolio(self):
         # Save some details of the portfolio to a csv file?
 
