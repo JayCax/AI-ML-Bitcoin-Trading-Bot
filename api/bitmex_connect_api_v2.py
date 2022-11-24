@@ -212,7 +212,8 @@ class LiveTrading:
         Subsequently, appends the items to the data dictionary, and saves as a csv file.
         """
         # Call API to get any additional data from last time we updated data.
-        single_data_dictionary = self.bitmex_client.get_latest_btc_1m_data()  # Need to make sure that this function is getting the right pieces of data.
+        # Need to make sure that this function is getting the right pieces of data.
+        single_data_dictionary = self.bitmex_client.get_latest_btc_1m_data()
         # append to dict
         for key, val in single_data_dictionary.items():
             try:
