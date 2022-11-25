@@ -14,6 +14,7 @@ import bitmex_cleaning
 import csv
 
 from Get_Trade import get_trade, load_NN, close_NN
+
 # import AIML Bitcoin Trading Bot
 
 # testing with bitmex paper trading
@@ -94,7 +95,7 @@ class BitmexClient:
             self.cleaned_btc_data[replacement.get(k, k)] = self.cleaned_btc_data.pop(k)
 
         # volume_currency is volume_btc*close
-        self.cleaned_btc_data["volume_currency"] = self.cleaned_btc_data["volume_btc"]*self.cleaned_btc_data["close"]
+        self.cleaned_btc_data["volume_currency"] = self.cleaned_btc_data["volume_btc"] * self.cleaned_btc_data["close"]
         # reorder dictionary to match
         temp = self.cleaned_btc_data["weighted_price"]
         del self.cleaned_btc_data["weighted_price"]
@@ -199,12 +200,12 @@ class LiveTrading:
         self.data = self.data.loc[:, ['returns'] + list(features)]
         print(self.data)
 
-    #def get_trade(self):
-        # will be implemented by Dave
-        # load model
-        #data = self.data
-        # returns -1 for short, 0 for closed, +1 for long
-        #return random.randint(-1, 1)
+    # def get_trade(self):
+    # will be implemented by Dave
+    # load model
+    # data = self.data
+    # returns -1 for short, 0 for closed, +1 for long
+    # return random.randint(-1, 1)
 
     def get_data(self):
         """
@@ -261,7 +262,7 @@ class LiveTrading:
         """ Runs the live trading Bot """
         # set up
         num_seconds_between_query = 1  # will be 60 eventually when working
-        num_minutes_avg = 5             # will be some number, currently 60, but maybe 10 or 30
+        num_minutes_avg = 5  # will be some number, currently 60, but maybe 10 or 30
         total_counter = 0
         counter = 0
         current_time = time.time() - num_seconds_between_query
@@ -274,14 +275,16 @@ class LiveTrading:
                 self.get_data()
                 if counter > num_minutes_avg:
                     # Pre-process to add the additional columns to the new data (ex rsi, macd)
-                    bitmex_cleaning.clean_x_min_data_convert_to_h5(csv_in=self.csv_file, csv_out='temporary.csv', h5_out='bitmex_api.h5', minutes=num_minutes_avg)
+                    bitmex_cleaning.clean_x_min_data_convert_to_h5(csv_in=self.csv_file, csv_out='temporary.csv',
+                                                                   h5_out='bitmex_api.h5', minutes=num_minutes_avg)
                     self.load_data()
                     self.preprocess_data()
                     # need to wait long enough for data to start getting put into dataframe
                     if not self.data.empty:  # ensure there is data as it takes a while before data is populated
                         # decide what the trade will be: buy, long, short
                         # test_data = np.array([0.03452198, -0.50615868, -2.82824341, -2.90283056, -3.45309186, 0.52710094, -11.19257768, 9.95488124, -0.2326905, -1.07325023])
-                        current_state = self.data.tail(1).to_numpy()  # gets most recent data and converts to numpy array
+                        current_state = self.data.tail(
+                            1).to_numpy()  # gets most recent data and converts to numpy array
                         trade = get_trade(ddqn, state_dim, current_state)
                         print("trade is ", trade)
                         # make the trade
@@ -290,11 +293,12 @@ class LiveTrading:
                     counter = 0
                 counter += 1
                 total_counter += 1
-            if total_counter >= 3600:           # quit the function after # loops
+            if total_counter >= 3600:  # quit the function after # loops
                 break
         # record details in a csv file?
         self.obtain_record_portfolio()  # this function still needs to be implemented
         close_NN(trading_environment)
+
     def obtain_record_portfolio(self):
         # Save some details of the portfolio to a csv file?
 
@@ -317,7 +321,7 @@ class LiveTrading:
         for i in self.client.User.User_getWalletHistory().result()[0]:
             pnl_list.append(i["amount"])
 
-        pnl_list = [round(i*0.1, 2) for i in pnl_list]
+        pnl_list = [round(i * 0.1, 2) for i in pnl_list]
 
         # save PNL to csv file here
         with open(pnl_data, "w+", encoding="UTF8", newline='') as f:
@@ -325,7 +329,7 @@ class LiveTrading:
             writer.writerow(pnl_header)
             wal_hist = self.client.User.User_getWalletHistory().result()[0]
             for i in range(len(wal_hist)):
-                if i != len(wal_hist)-1:
+                if i != len(wal_hist) - 1:
                     pnl_val = wal_hist[i]["amount"]
                     pnl_val *= 0.1
                     pnl_val = round(pnl_val, 2)
