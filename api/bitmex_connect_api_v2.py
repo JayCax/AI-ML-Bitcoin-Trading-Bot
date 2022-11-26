@@ -275,7 +275,7 @@ class LiveTrading:
                 self.get_data()
                 if counter > num_minutes_avg:
                     # Pre-process to add the additional columns to the new data (ex rsi, macd)
-                    bitmex_cleaning.clean_x_min_data_convert_to_h5(csv_in=self.csv_file, csv_out='temporary.csv',
+                    bitmex_cleaning.clean_x_min_data_convert_to_h5(csv_in=self.csv_file, csv_out='bitmex_api.csv',
                                                                    h5_out='bitmex_api.h5', minutes=num_minutes_avg)
                     self.load_data()
                     self.preprocess_data()
@@ -288,7 +288,7 @@ class LiveTrading:
                         trade = get_trade(ddqn, state_dim, current_state)
                         print("trade is ", trade)
                         # make the trade
-                        self.make_trade(trade)  # this function needs to be worked on
+                        self.make_trade(trade)
                     # reset counter
                     counter = 0
                 counter += 1
