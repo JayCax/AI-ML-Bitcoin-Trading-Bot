@@ -6,7 +6,6 @@ import sys
 
 
 def main():
-    # clean_1_min_data_convert_to_h5(csv_in="bitstampUSD_1-min_data_2012-01-01_to_2021-03-31.csv", csv_out="cleaned_bitcoin_1min_with_ticker.csv", h5_out="1_min_btc.h5")
     clean_x_min_data_convert_to_h5(csv_in="bitstampUSD_1-min_data_2012-01-01_to_2021-03-31.csv", csv_out="cleaned_bitcoin_60min_with_ticker.csv", h5_out="60_min_btc.h5", minutes=60)
 
 
@@ -20,13 +19,6 @@ def convert_csv_to_h5(csv_in, h5_out):
     pd.set_option('display.expand_frame_repr', False)
 
     DATA_STORE = Path(h5_out)
-
-    # how it was done originally
-    # df = (pd.read_csv(csv_in,
-    #                   parse_dates=['date'],
-    #                   index_col=['date', 'ticker'],
-    #                   infer_datetime_format=True)
-    #       .sort_index())
 
     df = (pd.read_csv(csv_in,
                       index_col=['timestamp', 'ticker', 'minute'])
