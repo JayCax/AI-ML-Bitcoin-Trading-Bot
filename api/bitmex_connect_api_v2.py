@@ -295,7 +295,7 @@ class LiveTrading:
                 total_counter += 1
             if total_counter >= 3600:  # quit the function after # loops
                 break
-        # record details in a csv file?
+        # record details in a csv file
         self.obtain_record_portfolio()  # this function still needs to be implemented
         close_NN(trading_environment)
 

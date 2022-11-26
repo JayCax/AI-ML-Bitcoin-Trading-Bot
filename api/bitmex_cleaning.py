@@ -6,7 +6,6 @@ import sys
 
 
 def main():
-    # clean_1_min_data_convert_to_h5(csv_in="bitstampUSD_1-min_data_2012-01-01_to_2021-03-31.csv", csv_out="cleaned_bitcoin_1min_with_ticker.csv", h5_out="1_min_btc.h5")
     clean_x_min_data_convert_to_h5(csv_in="bitstampUSD_1-min_data_2012-01-01_to_2021-03-31.csv", csv_out="cleaned_bitcoin_6000min_with_ticker.csv", h5_out="6000_min_btc.h5", minutes=6000)
 
 
@@ -25,13 +24,11 @@ def convert_csv_to_h5(csv_in, h5_out):
                       index_col=['timestamp', 'ticker', 'minute'])
           .sort_index())
 
-    # print(df.info(null_counts=True))
     with pd.HDFStore(DATA_STORE) as store:
         store.put('quandl/wiki/prices', df)
 
     df = pd.read_csv(f"{csv_in}")
 
-    # print(df.info(null_counts=True))
     with pd.HDFStore(DATA_STORE) as store:
         store.put('quandl/wiki/stocks', df)
 
