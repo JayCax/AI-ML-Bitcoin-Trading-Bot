@@ -47,16 +47,13 @@ conda activate CryptoBot
 
 Conda install pip, if necessary.
 
-Finally, 
-
-```
-$ pip install gym==0.26.1
-```
+Finally, There are some additional packages that need a pip install:
 
 # Additional Packages that need pip install 
 
 - Certain exchange API modules and packages need to be pip installed 
   - These necessary pip installs include: 
     - binance ```$ pip install binance ```
+    - binance ```$ pip install gym==0.26.1 ```
     - bitmex ```$ pip install bitmex ```
     - ccxt ```$ pip install ccxt ```
