@@ -11,5 +11,13 @@
     # create your new environment: conda create --name <env> --file requirements.txt
         # example: conda create --name CryptoBot --file requirements.txt
         # Note, this may take a while because we have so many requirements
-    # Activate enviroment, install pip to conda if necessary
-    # Finally, pip install gym==0.26.1
+    # Activate environment, install pip to conda if necessary
+
+    # Additional Packages that need pip install
+        - Certain exchange API modules and packages need to be pip installed
+          - These necessary pip installs include:
+            - binance ```$ pip install binance ```
+            - binance ```$ pip install gym==0.26.1 ```
+            - bitmex ```$ pip install bitmex ```
+            - ccxt ```$ pip install ccxt ```
+
