@@ -18,8 +18,8 @@ from Get_Trade import get_trade, load_NN, close_NN
 # import AIML Bitcoin Trading Bot
 
 # testing with bitmex paper trading
-bitmex_api_key = "yc9cECO9UjxiUYgEGNP8q7Yb"
-bitmex_secret_key = "GTLDBMMXaPtM1-7g7ZQFl96Yqwqd5J1N_8CrPIbyRsgEJ2lg"
+bitmex_api_key = "3I0oOTNSOemyhuHPe8y2jdP4"
+bitmex_secret_key = "N20IpfBQJxgKWXnoO2AH0u7Zfu0FOsom5oj75VDfDkm1QSRk"
 base_url = "https://testnet.bitmex.com/"
 
 
