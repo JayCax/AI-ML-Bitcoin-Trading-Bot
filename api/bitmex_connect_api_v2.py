@@ -18,8 +18,8 @@ from Get_Trade import get_trade, load_NN, close_NN
 # import AIML Bitcoin Trading Bot
 
 # testing with bitmex paper trading
-bitmex_api_key = "yc9cECO9UjxiUYgEGNP8q7Yb"
-bitmex_secret_key = "GTLDBMMXaPtM1-7g7ZQFl96Yqwqd5J1N_8CrPIbyRsgEJ2lg"
+bitmex_api_key = "3I0oOTNSOemyhuHPe8y2jdP4"
+bitmex_secret_key = "N20IpfBQJxgKWXnoO2AH0u7Zfu0FOsom5oj75VDfDkm1QSRk"
 base_url = "https://testnet.bitmex.com/"
 
 
@@ -151,6 +151,7 @@ class LiveTrading:
         self.csv_file = 'get_data_bitmex.csv'
         self.data = None
         self.current_position = 0  # -1 for short, 0 for closed, +1 for long
+        self.money_made_excluding_fees = 0
 
     def load_data(self):
         """ load the data from the h5 file. """
@@ -236,9 +237,9 @@ class LiveTrading:
             if self.current_position == -1:
                 pass
             elif self.current_position == 0:
-                self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-1000).result()
+                self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-1000).result()[0]['price']
             elif self.current_position == 1:
-                self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-2000).result()
+                self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-2000).result()[0]['price']
             # set current position appropriately
             self.current_position = -1
         elif Trade == 0:
@@ -300,6 +301,7 @@ class LiveTrading:
         close_NN(trading_environment)
 
     def obtain_record_portfolio(self):
+        # print(self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=1000).result()[0]['price'])
         # Save some details of the portfolio to a csv file?
 
         # # problematic since this is pulling from perp account - something like this
@@ -312,37 +314,41 @@ class LiveTrading:
 
         # print(self.client.User.User_getWallet.result())
 
-        pnl_header = ["PNL", "TotalUSDAccountValue"]
+        # print(self.bitmex_client.client.Execution.result())
+
+        pnl_header = ["TransactionDateTime", "PNL", "TotalUSDAccountValue"]
         pnl_data = "pnl_data.csv"
 
         pnl_list = []
-
+        date_list = []
         # actual - ALL PNL history - we want latest, index with [0]
-        for i in self.client.User.User_getWalletHistory().result()[0]:
+        for i in self.bitmex_client.client.User.User_getWalletHistory().result()[0]:
+            # print(i)
             pnl_list.append(i["amount"])
-
+            date_list.append(i['transactTime'])
         pnl_list = [round(i * 0.1, 2) for i in pnl_list]
 
         # save PNL to csv file here
         with open(pnl_data, "w+", encoding="UTF8", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(pnl_header)
-            wal_hist = self.client.User.User_getWalletHistory().result()[0]
+            wal_hist = self.bitmex_client.client.User.User_getWalletHistory().result()[0]
             for i in range(len(wal_hist)):
                 if i != len(wal_hist) - 1:
                     pnl_val = wal_hist[i]["amount"]
                     pnl_val *= 0.1
                     pnl_val = round(pnl_val, 2)
-                    writer.writerow([str(pnl_val), str(sum(pnl_list[i:]))])
+                    writer.writerow([str(date_list[i]), str(pnl_val), str(sum(pnl_list[i:]))])
                 else:
                     pnl_val = wal_hist[i]["amount"]
                     pnl_val *= 0.1
                     pnl_val = round(pnl_val, 2)
-                    writer.writerow([str(pnl_val), str(pnl_val)])
+                    writer.writerow([str(date_list[i]), str(pnl_val), str(pnl_val)])
 
         return None
 
 
 if __name__ == "__main__":
     live_trading = LiveTrading()
-    live_trading.run_live_trading()
+    # live_trading.run_live_trading()
+    live_trading.obtain_record_portfolio()
