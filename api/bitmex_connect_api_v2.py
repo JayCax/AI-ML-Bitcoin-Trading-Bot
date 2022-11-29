@@ -1,11 +1,13 @@
 # binance, ccxt and bitmex need separate pip install
-
+import datetime
 import json
 import random
 
 import bitmex
 import ccxt
 import time
+
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import talib
@@ -103,45 +105,6 @@ class BitmexClient:
 
         return self.cleaned_btc_data
 
-    # def execute_bitmex_sample_trade(self):
-    #     """
-    #     Deprecated trade functions
-    #     # limit buy
-    #     self.client.Order.Order_new(symbol='XBTUSD', orderQty=100, price=18000).result()
-    #     # spot buy
-    #     self.client.Order.Order_new(symbol='XBTUSD', orderQty=100).result()
-    #     # limit sell
-    #     self.client.Order.Order_new(symbol='XBTUSD', orderQty=-100, price=25000).result()
-    #     # spot sell
-    #     self.client.Order.Order_new(symbol='XBTUSD', orderQty=-100).result()
-    #     """
-    #
-    #     # # may use cctx to execute trades
-    #     # print(self.bm.fetch_trades('XBTUSDT'))
-    #
-    #     # # UNCOMMENT THIS TO EXECUTE TRADE - TO BE CONNECTED TO THE BOT
-    #     # # spot buy with USDT 1000000 approx ~15 USDT token -arbitrary?
-    #     self.client.Order.Order_new(symbol='XBTUSDT', orderQty=1000000).result()
-    #
-    #     # # cancel open orders - for limit orders
-    #     # self.client.Order.Order_cancelAll().result()
-    #
-    #     # publish all historical orders
-    #     for i in self.client.Order.Order_getOrders(symbol="XBTUSDT").result()[0]:
-    #         print(i)
-    #
-    #     return None
-    #
-    # def save_funds_data(self):
-    #
-    #     # # problematic since this is pulling from perp account - something like this
-    #     # # to get overall pnl
-    #     # print(self.client.User.User_getWalletSummary().result()[0][0])
-    #
-    #     # actual - ALL PNL history - we want latest, index with [0]
-    #     for i in self.client.User.User_getWalletHistory().result()[0]:
-    #         print(i["amount"])
-
 
 class LiveTrading:
     def __init__(self):
@@ -152,6 +115,7 @@ class LiveTrading:
         self.data = None
         self.current_position = 0  # -1 for short, 0 for closed, +1 for long
         self.money_made_excluding_fees = 0
+        self.money_made_excluding_fees_list = []
 
     def load_data(self):
         """ load the data from the h5 file. """
@@ -201,13 +165,6 @@ class LiveTrading:
         self.data = self.data.loc[:, ['returns'] + list(features)]
         print(self.data)
 
-    # def get_trade(self):
-    # will be implemented by Dave
-    # load model
-    # data = self.data
-    # returns -1 for short, 0 for closed, +1 for long
-    # return random.randint(-1, 1)
-
     def get_data(self):
         """
         Calls API to get any additional data from last time we updated data.
@@ -237,33 +194,41 @@ class LiveTrading:
             if self.current_position == -1:
                 pass
             elif self.current_position == 0:
-                self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-1000).result()[0]['price']
+                self.money_made_excluding_fees += self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-1000).result()[0]['price']
             elif self.current_position == 1:
-                self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-2000).result()[0]['price']
+                self.money_made_excluding_fees += self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-2000).result()[0]['price']*2
             # set current position appropriately
             self.current_position = -1
         elif Trade == 0:
             # close Position: that is, sell or buy everything back to 0
-            if self.current_position != 0:
-                self.bitmex_client.client.Order.Order_closePosition(symbol='XBTUSDT').result()
+            if self.current_position == -1:
+                self.money_made_excluding_fees -= self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=1000).result()[0]['price']
+            elif self.current_position == 1:
+                self.money_made_excluding_fees += self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-1000).result()[0]['price']
             # set current position appropriately
             self.current_position = 0
+            self.money_made_excluding_fees_list.append(self.money_made_excluding_fees)
         elif Trade == 1:
             # long
             if self.current_position == -1:
-                self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=2000).result()
+                self.money_made_excluding_fees -= self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=2000).result()[0]['price']*2
             elif self.current_position == 0:
-                self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=1000).result()
+                self.money_made_excluding_fees -= self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=1000).result()[0]['price']
             elif self.current_position == 1:
                 pass
             # set current position appropriately
             self.current_position = 1
+        print("Money Made Excluding Fees: ", self.money_made_excluding_fees)
 
     def run_live_trading(self):
-        """ Runs the live trading Bot """
+        """
+        Runs the live trading Bot.
+        Note: This is proof of concept, ideally any trading would be done with the binance platform,
+        and would be traded on a similar scale to that of the trained model
+        """
         # set up
-        num_seconds_between_query = 1  # will be 60 eventually when working
-        num_minutes_avg = 5  # will be some number, currently 60, but maybe 10 or 30
+        num_seconds_between_query = 1  # will be 60 eventually to fit with the current model
+        num_minutes_avg = 2  # would also be 60 to fit with our current model
         total_counter = 0
         counter = 0
         current_time = time.time() - num_seconds_between_query
@@ -294,13 +259,33 @@ class LiveTrading:
                     counter = 0
                 counter += 1
                 total_counter += 1
-            if total_counter >= 3600:  # quit the function after # loops
+            if total_counter >= 1200:  # quit the function after # loops
                 break
-        # record details in a csv file
-        self.obtain_record_portfolio()  # this function still needs to be implemented
+
         close_NN(trading_environment)
+        # close Position: that is, sell or buy everything back to 0
+        if self.current_position == -1:
+            self.money_made_excluding_fees -= self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=1000).result()[0]['price']
+        elif self.current_position == 1:
+            self.money_made_excluding_fees += self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=-1000).result()[0]['price']
+        # set current position appropriately
+        self.current_position = 0
+
+        self.money_made_excluding_fees_list.append(self.money_made_excluding_fees)
+        print("Money Made Excluding Fees: ", self.money_made_excluding_fees)
+        # record details in a csv file
+        self.obtain_record_portfolio()  # this function still doesn't seem to work properly
+
+        # make a nice plot
+        plt.plot(self.money_made_excluding_fees_list)
+        # naming the x axis
+        plt.xlabel('Closed Positions')
+        # naming the y axis
+        plt.ylabel('Gain/Loss (dollars)')
+        plt.show()
 
     def obtain_record_portfolio(self):
+        # print(self.bitmex_client.client.Order.Order_closePosition(symbol='XBTUSDT').result()[0]['price'])
         # print(self.bitmex_client.client.Order.Order_new(symbol='XBTUSDT', orderQty=1000).result()[0]['price'])
         # Save some details of the portfolio to a csv file?
 
@@ -315,13 +300,18 @@ class LiveTrading:
         # print(self.client.User.User_getWallet.result())
 
         # print(self.bitmex_client.client.Execution.result())
-
+        # print(dir(self.bitmex_client.client.User))
+        # print(self.bitmex_client.client.User.User_getExecutionHistory(symbol='XBTUSDT', timestamp=datetime.datetime).result())
+        # for i in dir(self.bitmex_client.client.Position):
+        #     print(type(getattr(self.bitmex_client.client.Position, i)))
+        # print(self.bitmex_client.client.Position.resource())
         pnl_header = ["TransactionDateTime", "PNL", "TotalUSDAccountValue"]
         pnl_data = "pnl_data.csv"
 
         pnl_list = []
         date_list = []
         # actual - ALL PNL history - we want latest, index with [0]
+        # print(self.bitmex_client.client.User.User_getWalletHistory(count=100, currency='all').result())
         for i in self.bitmex_client.client.User.User_getWalletHistory().result()[0]:
             # print(i)
             pnl_list.append(i["amount"])
@@ -350,5 +340,5 @@ class LiveTrading:
 
 if __name__ == "__main__":
     live_trading = LiveTrading()
-    # live_trading.run_live_trading()
-    live_trading.obtain_record_portfolio()
+    live_trading.run_live_trading()
+    # live_trading.obtain_record_portfolio()
