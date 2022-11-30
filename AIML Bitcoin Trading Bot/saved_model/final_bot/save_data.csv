@@ -1,0 +1,17 @@
+gamma,0.9
+tau,100
+architecture,512,512
+learning_rate,0.0001
+l2_reg,0.0
+replay_capacity,200000
+batch_size,8192
+epsilon,6.821951929571235e-12
+epsilon_start,1.0
+epsilon_end,0.01
+epsilon_decay_steps,500
+epsilon_exponential_decay,0.99
+trading_cost_bps,0.0001
+time_cost_bps,0
+trading_periods,168
+episodes_run,2600
+total_steps,436800
