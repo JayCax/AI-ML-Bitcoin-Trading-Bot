@@ -331,7 +331,7 @@ def load_saved_data(dir_name):
     loaded_data = {}
 
     # read variables to save_data.csv
-    load_path = 'AIML Bitcoin Trading Bot/saved_model/' + dir_name + "/" + "save_data.csv"
+    load_path = 'saved_model/' + dir_name + "/" + "save_data.csv"
     with open(load_path, mode='r') as load_file:
         csv_reader = csv.reader(load_file, delimiter=',')
         for row in csv_reader:
