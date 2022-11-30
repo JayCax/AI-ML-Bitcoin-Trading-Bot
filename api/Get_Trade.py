@@ -364,7 +364,7 @@ def main():
     else:
         print('Using CPU')
 
-    load_dir_name = "200_100_200_500_300steps_eds500v2"  # directory that holds the final saved model for live trading
+    load_dir_name = "final_bot"  # directory that holds the final saved model for live trading
     loaded_data = load_saved_data(load_dir_name)
     trading_periods = loaded_data["trading_periods"]
 
