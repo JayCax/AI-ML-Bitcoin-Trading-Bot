@@ -226,6 +226,7 @@ class LiveTrading:
         Runs the live trading Bot.
         Note: This is proof of concept, ideally any trading would be done with the binance platform,
         and would be traded on a similar scale to that of the trained model
+        NOTE: must run about 34 cycles before it starts trading
         """
         # set up
         num_seconds_between_query = 1  # will be 60 eventually to fit with the current model
@@ -260,7 +261,7 @@ class LiveTrading:
                     counter = 0
                 counter += 1
                 total_counter += 1
-            if total_counter >= 1200:  # quit the function after # loops
+            if total_counter >= 600:  # quit the function after # loops this means we'll run 600 times, which is currently about 10 minutes
                 break
 
         close_NN(trading_environment)
