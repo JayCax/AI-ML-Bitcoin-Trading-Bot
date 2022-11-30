@@ -1,6 +1,5 @@
 /api/10stepsv2/
 /AIML Bitcoin Trading Bot/saved_model/
-/data/60_min_btc.h5
 /data/bitstampUSD_1-min_data_2012-01-01_to_2021-03-31.csv
 /data/cleaned_bitcoin_60min_with_ticker.csv
 /api/saved_model/
