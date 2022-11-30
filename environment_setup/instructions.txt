@@ -1,23 +1,69 @@
-# how to create the requirements file:
-    # activate the conda enviroment you want to use.
-    # cd to the directory you want to put the requirements file.
-    # run this command: conda list -e > requirements.txt
-    # comment out # gym requirement
+Installation and Instructions
 
-# how to run the requirements file:
-    # go to conda (base) by running: conda deactivate
-    # run this command: conda config --append channels conda-forge
-    # cd to directory with requirements file
-    # create your new environment: conda create --name <env> --file requirements.txt
-        # example: conda create --name CryptoBot --file requirements.txt
-        # Note, this may take a while because we have so many requirements
-    # Activate environment, install pip to conda if necessary
+Running the program bitmex_connect_api_v2.py will start the Bitmex api, it will start pulling current Bitcoin data and feeding it to the neural network to come up with trades. The saved folder for the neural network you want to use for the paper trading should be in a directory called save_data. The name of the directory should be in the variable load_dir_name.
+Environment Setup
+The AI/ML Bitcoin Trading Bot Repo must be built on a Conda / Anaconda package & environment management system with Python 3.9 as the base interpreter.
+Activate the conda environment / interpreter you want to use.
+We recommend installation of the latest Conda package & environment manager version conda 22.9.0 that comes with Python 3.9 as its base interpreter.
+Within the repository, we have established an environment_setup folder with the requirements.txt file already created. Change to this directory.
+How to run the requirements.txt file:
+Proceed to the Anaconda / Conda terminal of your preferred IDE or the Anaconda / Conda powershell prompt.
+Go to conda (base) by running:
+conda deactivate
 
-    # Additional Packages that need pip install
-        - Certain exchange API modules and packages need to be pip installed
-          - These necessary pip installs include:
-            - binance ```$ pip install binance ```
-            - binance ```$ pip install gym==0.26.1 ```
-            - bitmex ```$ pip install bitmex ```
-            - ccxt ```$ pip install ccxt ```
+Run this command:
+conda config --append channels conda-forge
 
+cd to directory with requirements.txt file.
+Create your new environment:
+conda create --name <env> --file requirements.txt
+
+example:
+conda create --name CryptoBot --file requirements.txt
+
+Note, this may take a while because the AI/ML bot needs many packages and libraries installed.
+Activate environment via:
+conda activate CryptoBot
+
+Conda install pip, if necessary.
+Finally, There are some additional packages that need a pip install:
+Additional Packages that need pip install
+Certain exchange API modules and packages need to be pip installed
+These necessary pip installs include:
+binance $ pip install binance
+binance $ pip install gym==0.26.1
+bitmex $ pip install bitmex
+ccxt $ pip install ccxt
+
+
+Training a new Bot
+The program can be run with the user simply by running RL_training.py, and then answering the following 3 questions:
+Do you want to load a previously used file?
+How long do you want the periods to be?
+How many episodes to run?
+The network will then train for the requested number of steps. A unique directory based on the date and time when the training program finishes running will be created where all the details of the neural network along with performance statistics and graphs will be saved. You will need to run it for at least 100 episodes if you want data to show-up on the performance graph.
+Note that training is pretty slow, it will probably take your computer about an hour for every 100 episodes.
+For more customization: You can jump to about line 200 in the RL_training.py and customize as many parameters as you would like.
+
+Viewing the Training Results
+We have already shared in the github our best saved_model. To view the results of that model, go to AIML Bitcoin Trading Bot -> saved_model -> final_bot. Now you can look at performance.png, results.csv, save_dat.csv or results_summary.txt. You can look at the results of your own training by going to the folder with the date and time that was created by training your bot.
+
+Live Trading
+By default, everything is set up to allow you to run the live_trading_bitmex_api on our best saved model. Simply:
+Run: live_trading_bitmex_api.py
+Wait about 34 cycles of data gathering (about 1 minutes)
+After this you will see the api print out the trade (1 for long, 0 for cash out, -1 for short)
+The api will also print out the Money Mad excluding Fees.
+When the program finishes trading (after 10 minutes) it will display a graph demonstrating how much money was made or lost (excluding fees)
+Live Trading on your own saved model
+Copy your saved model into the api folder
+Go to: Get_Trade line 317 and update load_dir_name to the name of the folder of your saved model
+Run: live_trading_bitmex_api.py
+Making Adjustments to Live Trading
+If you want (OPTIONALLY) the live trading to be run on the same scale as the training go to lines 232-233:
+num_seconds_between_query = 1  #set to 60
+num_minutes_avg = 2  # set to 60
+Note: This will make the test take a few days to run, but then would be based off our 60 minute trading data.
+
+Final Notes:
+The data folder contains a cleaning function, this is not necessary for you to use, as we have already cleaned the data for you in the h5 file.
