@@ -259,7 +259,7 @@ class TradingEnvironment(gym.Env):
         return self.data_source.take_step()[0]
 
     def render(self, vals_1, vals_2, mode='human'):
-        """Not implemented"""
+        """This works, but is not that useful"""
         self.ax1.plot(vals_1, lw=1)
         self.ax1.set_title('Annual Returns (Moving Average)')
         self.ax2.plot(vals_2)

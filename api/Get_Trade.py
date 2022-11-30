@@ -41,6 +41,7 @@ import csv
 
 RESULT_SUMMARY = []
 
+
 #### CLASSES ####
 
 ## DEFINE TRADING AGENT
@@ -94,7 +95,7 @@ class DDQNAgent:
 
         self.total_steps = total_steps
         self.episodes = episodes
-        self.train_steps = self.train_episodes = 0   # these appear to be unused
+        self.train_steps = self.train_episodes = 0  # these appear to be unused
         self.episode_length = 0
         self.steps_per_episode = steps_per_episode
         self.episode_reward = 0
@@ -131,7 +132,7 @@ class DDQNAgent:
     def epsilon_greedy_policy(self, state):
         self.total_steps += 1
         q = self.online_network.predict(state)
-        print("q is ",q)
+        print("q is ", q)
         return np.argmax(q, axis=1).squeeze()
 
     def memorize_transition(self, s, a, r, s_prime, not_done):
@@ -195,13 +196,11 @@ def set_up_gym(trading_periods):
 
 
 def init_agent(trading_periods, loaded_data={}):
-
-    if not loaded_data:  #if no data loaded put our base values into loaded_data dictionary
-        loaded_data = { 'trading_cost_bps': 0.0001, 'time_cost_bps': .00001, 'gamma': 0.99, 'tau': 100,
-                        'architecture': [256, 256], 'learning_rate': 0.0001, 'l2_reg': 1e-06,
-                        'replay_capacity': 1000000, 'batch_size': 4096, 'epsilon': 1.0, 'epsilon_start': 1.0,
-                        'epsilon_end': 0.01, 'epsilon_decay_steps': 250, 'epsilon_exponential_decay': 0.99,}
-
+    if not loaded_data:  # if no data loaded put our base values into loaded_data dictionary
+        loaded_data = {'trading_cost_bps': 0.0001, 'time_cost_bps': .00001, 'gamma': 0.99, 'tau': 100,
+                       'architecture': [256, 256], 'learning_rate': 0.0001, 'l2_reg': 1e-06,
+                       'replay_capacity': 1000000, 'batch_size': 4096, 'epsilon': 1.0, 'epsilon_start': 1.0,
+                       'epsilon_end': 0.01, 'epsilon_decay_steps': 250, 'epsilon_exponential_decay': 0.99, }
 
     ## INITIALIZING TRADING ENVIRONMENT
     trading_cost_bps = loaded_data["trading_cost_bps"]
@@ -232,7 +231,7 @@ def init_agent(trading_periods, loaded_data={}):
         steps_per_episode = []
         rewards_history = []
         losses = []
-    print("seed ",rseed)
+    print("seed ", rseed)
     trading_environment.seed(rseed)
 
     ## GET ENVIRONMENT PARAMS
@@ -244,13 +243,13 @@ def init_agent(trading_periods, loaded_data={}):
     ## DEFINE HYPERPARAMETERS
 
     gamma = loaded_data["gamma"]  # discount factor
-    tau = loaded_data["tau"]     # target network update frequency
+    tau = loaded_data["tau"]  # target network update frequency
 
     ## NN ARCHITECTURE
 
-    architecture = loaded_data["architecture"]   # units per layer
-    learning_rate = loaded_data["learning_rate"]      # learning rate
-    l2_reg = loaded_data["l2_reg"]              # L2 regularization
+    architecture = loaded_data["architecture"]  # units per layer
+    learning_rate = loaded_data["learning_rate"]  # learning rate
+    l2_reg = loaded_data["l2_reg"]  # L2 regularization
 
     ## EXPIRIENCE REPLAY
 
@@ -300,13 +299,12 @@ def init_agent(trading_periods, loaded_data={}):
     return (trading_environment, ddqn, state_dim)
 
 
-
 def get_trade(ddqn, state_dim, current_state):
-
-    print("current state is ",current_state)
-    action = ddqn.epsilon_greedy_policy(current_state.reshape(-1, state_dim))-1  # -1 is short, 0 is hold cash, 1 is long
+    print("current state is ", current_state)
+    action = ddqn.epsilon_greedy_policy(current_state.reshape(-1, state_dim)) - 1  # -1 is short, 0 is hold cash, 1 is long
     print("action is ", action)
     return action
+
 
 def load_NN():
     gpu_devices = tf.config.experimental.list_physical_devices('GPU')
@@ -328,18 +326,19 @@ def load_NN():
 def close_NN(trading_environment):
     trading_environment.close()
 
+
 def load_saved_data(dir_name):
     loaded_data = {}
 
     # read variables to save_data.csv
-    load_path = 'saved_model/' + dir_name + "/" + "save_data.csv"
+    load_path = 'AIML Bitcoin Trading Bot/saved_model/' + dir_name + "/" + "save_data.csv"
     with open(load_path, mode='r') as load_file:
         csv_reader = csv.reader(load_file, delimiter=',')
         for row in csv_reader:
             if len(row) > 2:
                 loaded_data[row[0]] = [int(x) for x in row[1:]]
             else:
-                value = float(row[1])         # convert to float first then switch to int if it should be an int
+                value = float(row[1])  # convert to float first then switch to int if it should be an int
                 # key is variable name, check if decimal or scientific notation ex e-05
                 loaded_data[row[0]] = (value, int(value))[row[1].find(".") == -1 and row[1].find("e-") == -1]
 
@@ -357,7 +356,6 @@ def load_saved_data(dir_name):
     return loaded_data
 
 
-
 def main():
     gpu_devices = tf.config.experimental.list_physical_devices('GPU')
     if gpu_devices:
@@ -365,8 +363,6 @@ def main():
         tf.config.experimental.set_memory_growth(gpu_devices[0], True)
     else:
         print('Using CPU')
-
-
 
     load_dir_name = "200_100_200_500_300steps_eds500v2"  # directory that holds the final saved model for live trading
     loaded_data = load_saved_data(load_dir_name)
@@ -378,7 +374,7 @@ def main():
 
     with open('../AIML Bitcoin Trading Bot/test.npy', 'rb') as f:
         test_data = np.load(f)
-    print("test data ",test_data)
+    print("test data ", test_data)
     for hour in test_data:
         get_trade(ddqn, state_dim, hour)
 
