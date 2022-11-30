@@ -53,7 +53,6 @@ Finally, There are some additional packages that need a pip install:
 
 - Certain exchange API modules and packages need to be pip installed 
   - These necessary pip installs include: 
-    - binance ```$ pip install binance ```
     - binance ```$ pip install gym==0.26.1 ```
     - bitmex ```$ pip install bitmex ```
     - ccxt ```$ pip install ccxt ```
